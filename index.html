@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>旅遊工具 v5.3 - 數據全方位版</title>
+    <title>旅遊工具 v5.5 - 完整繁體旗艦版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -16,15 +16,28 @@
         }
         body.light-mode { --text-color: #1a1a1a; --card-bg: rgba(245, 245, 245, 0.75); --tab-bg: rgba(255, 255, 255, 0.98); --base-bg: #f0f2f5; }
         body, html { height: 100%; margin: 0; overflow: hidden; background: var(--base-bg); max-width: 500px; margin: 0 auto; color: var(--text-color); font-family: "Inter", "PingFang TC", "Microsoft JhengHei", sans-serif; transition: background 0.5s ease; }
+        
+        /* 背景層 */
         .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--base-bg); background-image: var(--bg-img); background-size: cover; background-position: center; z-index: 1; transition: filter 0.5s ease; }
         .content-layer { position: relative; width: 100%; height: 100%; z-index: 2; overflow: hidden; }
+        
+        /* 頁面切換動畫 */
         .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; overflow-y: auto; padding-top: env(safe-area-inset-top); padding-bottom: 140px; }
         .page.active { display: flex; animation: pageFade 0.4s ease-out; }
         @keyframes pageFade { from { opacity: 0; filter: blur(10px); } to { opacity: 1; filter: blur(0); } }
-        .card-frosted { background: var(--card-bg) !important; backdrop-filter: blur(var(--glass-blur)) saturate(110%) brightness(105%) !important; -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(110%) brightness(105%) !important; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 28px; margin-bottom: 20px; }
-        #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: rgba(0,0,0,0.7); display: none; flex-direction: column; padding: 80px 40px; backdrop-filter: blur(80px) brightness(60%); -webkit-backdrop-filter: blur(80px); }
+
+        /* 極致毛玻璃卡片 */
+        .card-frosted { background: var(--card-bg) !important; backdrop-filter: blur(var(--glass-blur)) saturate(110%) brightness(105%) !important; -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(110%) brightness(105%) !important; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 28px; margin-bottom: 20px; transition: transform 0.2s ease; }
+        .card-frosted:active { transform: scale(0.98); }
+
+        /* 鎖定介面 */
+        #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: rgba(0,0,0,0.7); display: none; flex-direction: column; padding: 80px 40px; backdrop-filter: blur(80px) brightness(60%); -webkit-backdrop-filter: blur(80px); transition: all 0.5s ease; }
         #lock-screen.active { display: flex; }
         .vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
+
+        /* 導航欄 */
+        .tab-bar { background: var(--tab-bg); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="dark-mode">
@@ -36,7 +49,7 @@
                 <p id="lock-time" class="text-7xl font-black text-white tracking-tighter leading-none">00:00</p>
                 <div class="flex items-center gap-3 mt-4">
                     <span class="bg-sky-500 text-white text-[10px] px-2 py-0.5 font-black rounded italic">GMT+8</span>
-                    <p id="lock-date" class="text-lg font-bold text-white/60">載入中...</p>
+                    <p id="lock-date" class="text-lg font-bold text-white/60">搜尋中...</p>
                 </div>
             </div>
             <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase italic">Travel Toolkit Sync</div>
@@ -51,6 +64,7 @@
                     <div id="lock-w-icon-box" class="text-5xl mb-1"></div>
                 </div>
             </div>
+            <p class="text-center text-[10px] font-black opacity-30 mt-6 tracking-[0.5em] uppercase">點擊螢幕進入工具</p>
         </div>
     </div>
 
@@ -61,20 +75,28 @@
                 <div class="flex items-center space-x-2">
                     <button onclick="toggleLockScreen()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:scale-90"><i class="fa-solid fa-expand"></i></button>
                     <button onclick="toggleTheme()" id="theme-btn" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:scale-90"><i class="fa-solid fa-moon"></i></button>
-                    <label class="text-[10px] font-black bg-white/5 px-4 py-3 rounded-full border border-white/10">背景<input type="file" id="bg-upload" accept="image/*" class="hidden"></label>
+                    <label class="text-[10px] font-black bg-white/5 px-4 py-3 rounded-full border border-white/10 cursor-pointer">背景<input type="file" id="bg-upload" accept="image/*" class="hidden"></label>
                 </div>
             </header>
+            
             <main class="px-6">
                 <section class="card-frosted p-10 text-center relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-sky-500"></div>
-                    <p class="text-[10px] font-black tracking-[0.6em] opacity-30 mb-8 uppercase">即時匯率換算</p>
+                    <p class="text-[10px] font-black tracking-[0.6em] opacity-30 mb-8 uppercase">即時匯率換算 (TWD ⮕ JPY)</p>
                     <input type="number" id="twd-input" placeholder="輸入台幣" inputmode="decimal" class="text-6xl font-black w-full text-center bg-transparent outline-none">
                     <div class="mt-8 text-5xl font-black text-sky-500">¥ <span id="jpy-output">0</span></div>
-                    <p id="rate-info" class="text-[10px] opacity-40 mt-5 font-bold uppercase"></p>
+                    <p id="rate-info" class="text-[10px] opacity-40 mt-5 font-bold uppercase">正在搜尋匯率數據...</p>
                 </section>
+
                 <div class="grid grid-cols-2 gap-4 mt-2">
-                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center group"><i class="fa-solid fa-route text-orange-400 text-2xl mb-3"></i><span class="font-bold text-[10px] uppercase">乘換案內</span></a>
-                    <a href="https://maps.google.com" target="_blank" class="card-frosted p-8 flex flex-col items-center group"><i class="fa-solid fa-location-crosshairs text-blue-400 text-2xl mb-3"></i><span class="font-bold text-[10px] uppercase">精確導航</span></a>
+                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center group">
+                        <i class="fa-solid fa-route text-orange-400 text-2xl mb-3"></i>
+                        <span class="font-bold text-[10px] uppercase">乘換案內</span>
+                    </a>
+                    <a href="https://www.google.com/maps" target="_blank" class="card-frosted p-8 flex flex-col items-center group">
+                        <i class="fa-solid fa-location-crosshairs text-blue-400 text-2xl mb-3"></i>
+                        <span class="font-bold text-[10px] uppercase">精確導航</span>
+                    </a>
                 </div>
             </main>
         </div>
@@ -84,22 +106,23 @@
                 <h2 class="text-2xl font-black italic tracking-widest text-sky-500">天氣資訊</h2>
                 <button onclick="fetchAllWeather()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:rotate-180 transition-transform"><i class="fa-solid fa-sync-alt"></i></button>
             </header>
-            <div id="weather-content" class="px-6 pb-24 space-y-4"></div>
+            <div id="weather-content" class="px-6 pb-24 space-y-4">
+                </div>
         </div>
     </div>
 
     <footer class="fixed bottom-10 left-0 right-0 z-50 px-10">
         <div class="tab-bar rounded-2xl p-2.5 flex justify-around items-center max-w-[260px] mx-auto shadow-2xl">
-            <button onclick="showPage('home-page')" id="tab-home" class="flex-1 py-4 text-sky-500"><i class="fa-solid fa-compass text-xl"></i></button>
-            <button onclick="showPage('weather-page')" id="tab-weather" class="flex-1 py-4 opacity-30"><i class="fa-solid fa-wind text-xl"></i></button>
+            <button onclick="showPage('home-page')" id="tab-home" class="flex-1 py-4 text-sky-500 transition-all"><i class="fa-solid fa-compass text-xl"></i></button>
+            <button onclick="showPage('weather-page')" id="tab-weather" class="flex-1 py-4 opacity-30 transition-all"><i class="fa-solid fa-wind text-xl"></i></button>
         </div>
     </footer>
 
     <script>
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
-        const countryNames = { 'TW': '台灣', 'JP': '日本' };
 
+        // --- 核心工具函數 ---
         function getWindDir(deg) {
             const arr = ["北","東北","東","東南","南","西南","西","西北"];
             return arr[Math.round(deg / 45) % 8];
@@ -112,63 +135,99 @@
                 const data = await res.json();
                 if (data && data[0]) {
                     const zh = data[0].local_names?.['zh'] || data[0].local_names?.['zh-tw'] || "";
-                    return zh || data[0].name || fallback;
+                    const en = data[0].name;
+                    return (zh && zh !== en) ? `${en} / ${zh}` : en || fallback;
                 }
             } catch (e) {}
             return fallback;
         }
 
+        async function getCityZH(cityName) {
+            try {
+                const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`);
+                const data = await res.json();
+                if (data && data[0]) {
+                    const zh = data[0].local_names?.['zh'] || data[0].local_names?.['zh-tw'] || "";
+                    return zh ? `${cityName} / ${zh}` : cityName;
+                }
+            } catch (e) {}
+            return cityName;
+        }
+
+        // --- UI 控制 ---
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.getElementById('tab-home').classList.toggle('opacity-30', id !== 'home-page');
+            document.getElementById('tab-home').classList.toggle('text-sky-500', id === 'home-page');
             document.getElementById('tab-weather').classList.toggle('opacity-30', id !== 'weather-page');
+            document.getElementById('tab-weather').classList.toggle('text-sky-500', id === 'weather-page');
             if(id === 'weather-page') fetchAllWeather();
         }
 
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('theme-btn').innerHTML = isLight ? '<i class="fa-solid fa-sun text-orange-500"></i>' : '<i class="fa-solid fa-moon text-sky-300"></i>';
+        }
+
+        document.getElementById('bg-upload').onchange = function(e) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                document.getElementById('main-bg').style.backgroundImage = `url(${reader.result})`;
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        // --- 氣象邏輯 ---
         async function fetchAllWeather() {
             const container = document.getElementById('weather-content');
-            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在搜尋當地大氣數據...</div>`;
+            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在搜尋各城市大氣數據...</div>`;
             
             navigator.geolocation.getCurrentPosition(async p => {
                 const { latitude: lat, longitude: lon } = p.coords;
-                const currentName = await getBilingualName(lat, lon, "目前位置");
+                const currentName = await getBilingualName(lat, lon, "搜尋中...");
                 
-                // 獲取當前天氣
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${lat}&lon=${lon}&lang=zh_tw`);
                 const d = await res.json();
                 
                 let html = generateWeatherCard(currentName, d, "目前位置", true);
                 
+                // 日本主要城市
                 const cities = ['Tokyo', 'Osaka', 'Kyoto'];
                 for(let city of cities) {
                     const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
                     const dc = await resC.json();
-                    html += generateWeatherCard(city, dc, "日本城市", false);
+                    const zhTitle = await getCityZH(city);
+                    html += generateWeatherCard(zhTitle, dc, "日本天氣", false);
                 }
                 container.innerHTML = html;
+
+                // 更新鎖定介面天氣
                 document.getElementById('lock-city').innerText = currentName;
-                document.getElementById('lock-w-desc').innerText = d.weather[0].description + " " + Math.round(d.main.temp) + "°C";
+                document.getElementById('lock-w-desc').innerText = `${d.weather[0].description} ${Math.round(d.main.temp)}°C`;
+                document.getElementById('lock-w-icon-box').innerHTML = getWeatherIcon(d.weather[0].icon);
+            }, () => {
+                container.innerHTML = `<div class="p-8 text-center opacity-50 font-bold">請開啟 GPS 以搜尋當地天氣資訊</div>`;
             });
         }
 
         function generateWeatherCard(title, d, label, isMain = false) {
-            // 修復紫外線/體感溫度邏輯：如果抓不到 UVI (通常是 API 限制)，則顯示體感溫度
-            const uvOrFeels = d.main.feels_like ? `${Math.round(d.main.feels_like)}°C` : "搜尋中";
-            const uvLabel = d.main.feels_like ? "體感溫度" : "紫外線";
-
+            // 優先使用體感溫度，若完全無數據則顯示搜尋中
+            const feelsLike = d.main.feels_like ? `${Math.round(d.main.feels_like)}°C` : "搜尋中";
+            
             return `
             <div class="card-frosted p-6 ${isMain ? 'border-l-4 border-sky-500' : ''}">
                 <div class="flex justify-between items-start">
                     <div>
                         <span class="text-[9px] font-black bg-white/10 text-white/60 px-2 py-0.5 rounded uppercase tracking-tighter">${label}</span>
-                        <p class="text-lg font-black mt-1 leading-tight">${title}</p>
+                        <p class="text-lg font-black mt-1 leading-tight">${title || '搜尋中...'}</p>
                     </div>
                     <div class="text-3xl">${getWeatherIcon(d.weather[0].icon)}</div>
                 </div>
                 <div class="flex items-end gap-2 mt-4">
                     <span class="text-4xl font-black">${Math.round(d.main.temp)}°</span>
-                    <span class="text-xs font-bold opacity-40 mb-1">${d.weather[0].description}</span>
+                    <span class="text-xs font-bold opacity-40 mb-1">${d.weather[0].description || '搜尋中'}</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/5">
                     <div class="text-center">
@@ -180,8 +239,8 @@
                         <p class="text-xs font-bold">${d.main.humidity}%</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-[9px] font-black opacity-30 uppercase">${uvLabel}</p>
-                        <p class="text-xs font-bold text-sky-400">${uvOrFeels}</p>
+                        <p class="text-[9px] font-black opacity-30 uppercase">體感溫度</p>
+                        <p class="text-xs font-bold text-sky-400">${feelsLike}</p>
                     </div>
                 </div>
             </div>`;
@@ -193,26 +252,48 @@
             switch(c) {
                 case '01': return isNight ? '<i class="fa-solid fa-moon text-yellow-200"></i>' : '<i class="fa-solid fa-sun text-orange-400"></i>';
                 case '02': return isNight ? '<i class="fa-solid fa-cloud-moon text-blue-200"></i>' : '<i class="fa-solid fa-cloud-sun text-orange-200"></i>';
+                case '03': case '04': return '<i class="fa-solid fa-cloud opacity-60 text-white"></i>';
                 case '09': case '10': return '<i class="fa-solid fa-cloud-showers-water text-sky-400"></i>';
-                default: return '<i class="fa-solid fa-cloud opacity-40"></i>';
+                case '11': return '<i class="fa-solid fa-cloud-bolt text-yellow-400"></i>';
+                case '13': return '<i class="fa-solid fa-snowflake text-white"></i>';
+                default: return '<i class="fa-solid fa-smog opacity-40"></i>';
             }
         }
 
+        // --- 匯率邏輯 ---
         async function updateRate() {
             try {
-                const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json();
-                currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `1 TWD = ${currentRate.toFixed(2)} JPY`;
-            } catch(e) { }
+                const r = await fetch('https://open.er-api.com/v6/latest/TWD');
+                const d = await r.json();
+                currentRate = d.rates.JPY;
+                document.getElementById('rate-info').innerText = `目前匯率：1 台幣 = ${currentRate.toFixed(2)} 日圓`;
+            } catch(e) {
+                document.getElementById('rate-info').innerText = `匯率搜尋失敗，使用緩存數據`;
+            }
         }
-        document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
-        function toggleLockScreen() { document.getElementById('lock-screen').classList.toggle('active'); updateTime(); }
+
+        document.getElementById('twd-input').oninput = e => {
+            const val = e.target.value;
+            document.getElementById('jpy-output').innerText = val ? Math.round(val * currentRate).toLocaleString() : '0';
+        };
+
+        // --- 時間與鎖定邏輯 ---
+        function toggleLockScreen() {
+            document.getElementById('lock-screen').classList.toggle('active');
+            updateTime();
+        }
+
         function updateTime() {
             const n = new Date();
             document.getElementById('lock-time').innerText = n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
             const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
             document.getElementById('lock-date').innerText = `${n.getMonth()+1}月${n.getDate()}日 ${days[n.getDay()]}`;
         }
-        setInterval(updateTime, 1000); updateRate();
+
+        // 初始化
+        setInterval(updateTime, 1000);
+        updateRate();
+        updateTime();
     </script>
 </body>
 </html>
