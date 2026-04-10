@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/826/826070.png">
-    <title>日本助手 - AI 強化版</title>
+    <title>日本助手 - 核心版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -26,14 +22,11 @@
         .page.active { display: block; opacity: 1; }
         .card-frosted { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(var(--glass-blur)) saturate(160%); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%); box-shadow: 0 15px 35px rgba(0,0,0,0.4); border-radius: 30px; }
         .tab-bar { background: var(--tab-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); }
-        input::placeholder { color: rgba(255,255,255,0.3); }
         
         #lock-time { font-size: 6.5rem; font-weight: 800; letter-spacing: -3px; line-height: 1; text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .lock-screen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: rgba(0,0,0,0.1); display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 100px; }
         .lock-screen-overlay.active { display: flex; animation: lockFadeIn 0.3s ease-out; }
         @keyframes lockFadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
-        .ai-glow { animation: glow 2s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 0 5px rgba(168, 85, 247, 0.1); } to { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); } }
     </style>
 </head>
 <body>
@@ -56,7 +49,7 @@
             <header class="p-8 pt-12 flex justify-between items-center">
                 <h1 class="text-3xl font-black italic tracking-tighter" style="color: var(--text-color);">JAPAN GO</h1>
                 <div class="flex items-center space-x-3">
-                    <button onclick="toggleLockScreen()" class="text-[11px] bg-white text-black font-black px-4 py-2 rounded-full shadow-lg">預覽</button>
+                    <button onclick="toggleLockScreen()" class="text-[11px] bg-white text-black font-black px-4 py-2 rounded-full">預覽</button>
                     <label class="text-[11px] font-black bg-white/10 px-4 py-2 rounded-full border border-white/10" style="color: var(--text-color);">
                         更換圖片 <input type="file" id="bg-upload" accept="image/*" class="hidden">
                     </label>
@@ -89,37 +82,59 @@
 
         <div id="weather-page" class="page">
             <header class="p-8 pt-12 flex justify-between items-center">
-                <h2 class="text-2xl font-black italic" style="color: var(--text-color);">精準氣象</h2>
-                <button onclick="refreshWeather()" class="text-[11px] bg-white text-black font-black px-5 py-2 rounded-full">刷新數據</button>
+                <h2 class="text-2xl font-black italic" style="color: var(--text-color);">旅遊氣象</h2>
+                <button onclick="fetchAllWeather()" class="text-[11px] bg-white text-black font-black px-5 py-2 rounded-full">刷新</button>
             </header>
             
-            <div class="px-6 space-y-6">
-                <div class="card-frosted p-10 text-center">
-                    <p class="text-[10px] font-black opacity-50 uppercase tracking-[0.3em] mb-2" style="color: var(--text-color);">當前行政區</p>
-                    <p id="g-city" class="text-3xl font-black mb-6" style="color: var(--text-color);">讀取中...</p>
-                    <div class="flex justify-between items-center px-4">
-                        <p id="g-temp" class="text-8xl font-black tracking-tighter" style="color: var(--text-color);">--°</p>
-                        <img id="g-icon" src="" class="w-28 h-28">
+            <div class="px-6 space-y-4">
+                <div class="card-frosted p-8 mb-6">
+                    <p class="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] mb-1">當前定位</p>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p id="g-city" class="text-2xl font-black">讀取中...</p>
+                            <p id="g-desc" class="text-sky-400 font-bold">--</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="g-temp" class="text-5xl font-black">--°</span>
+                            <img id="g-icon" src="" class="w-16">
+                        </div>
                     </div>
-                    <p id="g-desc" class="text-sky-400 font-black mt-4 text-xl">--</p>
                 </div>
 
-                <div class="card-frosted p-6 ai-glow border-purple-500/30">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
-                            <span class="font-black text-[10px] tracking-widest opacity-50">AI 旅遊指南</span>
-                        </div>
-                        <button onclick="getAIAdvice()" id="ai-btn" class="text-[10px] font-bold bg-purple-500 text-white px-3 py-1 rounded-full">獲取建議</button>
-                    </div>
-                    <p id="ai-content" class="text-sm font-bold leading-relaxed opacity-80">點擊按鈕，由 AI 結合當地氣候提供專屬建議。</p>
-                </div>
+                <p class="text-[11px] font-black tracking-[0.3em] opacity-40 uppercase px-2">日本主要城市</p>
                 
-                <div class="flex justify-between items-center px-2">
-                    <p class="text-[11px] font-black tracking-[0.3em] opacity-40 uppercase" style="color: var(--text-color);">自訂追蹤地區</p>
-                    <button onclick="saveCustomPlaces()" class="text-[10px] font-bold text-blue-400">儲存</button>
+                <div class="card-frosted p-6 flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <i class="fa-solid fa-landmark-dome text-red-400 text-xl"></i>
+                        <span class="font-black text-xl">東京</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span id="temp-tokyo" class="font-black text-3xl">--°</span>
+                        <img id="icon-tokyo" src="" class="w-12">
+                    </div>
                 </div>
-                <div class="space-y-4" id="custom-container"></div>
+
+                <div class="card-frosted p-6 flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <i class="fa-solid fa-castle text-blue-400 text-xl"></i>
+                        <span class="font-black text-xl">大阪</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span id="temp-osaka" class="font-black text-3xl">--°</span>
+                        <img id="icon-osaka" src="" class="w-12">
+                    </div>
+                </div>
+
+                <div class="card-frosted p-6 flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <i class="fa-solid fa-torii-gate text-orange-400 text-xl"></i>
+                        <span class="font-black text-xl">京都</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span id="temp-kyoto" class="font-black text-3xl">--°</span>
+                        <img id="icon-kyoto" src="" class="w-12">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -132,12 +147,10 @@
     </footer>
 
     <script>
-        // 核心密鑰
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
-        const GEMINI_KEY = 'AIzaSyBnHW5wEMzo9OcvJTMQ8ZN4a9MRQJqkPKY'; 
         let currentRate = 4.75;
 
-        // --- UI & 背景 ---
+        // 背景處理
         function applyBg(src) {
             document.documentElement.style.setProperty('--bg-img', `url(${src})`);
             const img = new Image(); img.src = src;
@@ -163,125 +176,50 @@
             document.getElementById(id).classList.add('active');
             document.getElementById('tab-home').style.color = (id === 'home-page' ? '#fff' : 'rgba(255,255,255,0.3)');
             document.getElementById('tab-weather').style.color = (id === 'weather-page' ? '#fff' : 'rgba(255,255,255,0.3)');
-            if(id === 'weather-page') { initWeather(); }
+            if(id === 'weather-page') fetchAllWeather();
         }
 
-        // --- 匯率 ---
+        // 匯率
         async function updateRate() {
             try { const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json(); currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `即時匯率: 1 TWD = ${currentRate.toFixed(2)} JPY`; } catch(e) {}
         }
         document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
 
-        // --- 天氣 (10分鐘快取) ---
-        async function initWeather() {
-            const cache = JSON.parse(localStorage.getItem('weather_main_cache'));
-            const now = Date.now();
-            if (cache && (now - cache.time < 600000)) { 
-                renderWeather(cache.data, cache.city);
-                loadCustomPlaces();
-            } else {
-                getGPS();
-            }
+        // 抓取所有天氣
+        function fetchAllWeather() {
+            getGPS();
+            fetchCityWeather('Tokyo', 'tokyo');
+            fetchCityWeather('Osaka', 'osaka');
+            fetchCityWeather('Kyoto', 'kyoto');
         }
 
-        function refreshWeather() { localStorage.removeItem('weather_main_cache'); getGPS(); loadCustomPlaces(true); }
-
-        function getGPS() {
-            navigator.geolocation.getCurrentPosition(
-                async p => {
-                    const lat = p.coords.latitude; const lon = p.coords.longitude;
-                    const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`);
-                    const geoData = await geoRes.json();
-                    const city = geoData[0]?.local_names?.['zh'] || geoData[0]?.name || "未知區域";
-                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lang=zh_tw&lat=${lat}&lon=${lon}`);
-                    const data = await res.json();
-                    const cacheObj = { time: Date.now(), data: data, city: city };
-                    localStorage.setItem('weather_main_cache', JSON.stringify(cacheObj));
-                    renderWeather(data, city);
-                },
-                e => { alert("請開啟定位權限"); },
-                { enableHighAccuracy: true }
-            );
-        }
-
-        function renderWeather(d, city) {
-            const icon = `https://openweathermap.org/img/wn/${d.weather[0].icon}@4x.png`;
-            document.getElementById('g-city').innerText = city;
-            document.getElementById('g-temp').innerText = Math.round(d.main.temp) + '°';
-            document.getElementById('g-icon').src = icon;
-            document.getElementById('g-desc').innerText = d.weather[0].description;
-            document.getElementById('lock-w-icon').src = icon;
-            document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°';
-            document.getElementById('lock-w-desc').innerText = d.weather[0].description;
-        }
-
-        // --- AI 助手實作 ---
-        async function getAIAdvice() {
-            const content = document.getElementById('ai-content');
-            const btn = document.getElementById('ai-btn');
-            const city = document.getElementById('g-city').innerText;
-            const temp = document.getElementById('g-temp').innerText;
-            const desc = document.getElementById('g-desc').innerText;
-
-            btn.innerText = "分析中...";
-            btn.disabled = true;
-
-            const prompt = `你是專業旅遊助手。地點:${city}，天氣:${desc}，氣溫:${temp}。請用50字以內繁體中文，給出今日穿衣指南與一條生活/旅遊冷知識建議。`;
-
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const d = await res.json();
-                content.innerText = d.candidates[0].content.parts[0].text;
-            } catch (e) {
-                content.innerText = "AI 正在日本度假，請稍後再試。";
-            } finally {
-                btn.innerText = "獲取建議";
-                btn.disabled = false;
-            }
-        }
-
-        // --- 自訂地區 ---
-        const customContainer = document.getElementById('custom-container');
-        function saveCustomPlaces() {
-            const inputs = document.querySelectorAll('.custom-input');
-            const places = Array.from(inputs).map(i => i.value);
-            localStorage.setItem('custom_places_v2', JSON.stringify(places));
-            loadCustomPlaces(true);
-        }
-
-        async function loadCustomPlaces() {
-            const saved = JSON.parse(localStorage.getItem('custom_places_v2') || '["", "", ""]');
-            customContainer.innerHTML = '';
-            saved.forEach(async (name, i) => {
-                const html = `
-                    <div class="card-frosted p-4 flex flex-col space-y-3">
-                        <input type="text" value="${name}" placeholder="輸入地區 ${i+1}" class="custom-input bg-white/5 p-3 rounded-xl border border-white/10 outline-none font-bold text-sm">
-                        <div id="res-${i}" class="flex justify-between items-center px-2 ${name ? '' : 'hidden'}">
-                            <span class="font-black text-lg">${name}</span>
-                            <div class="flex items-center gap-3">
-                                <span class="font-black text-2xl" id="temp-res-${i}">--°</span>
-                                <img id="icon-res-${i}" src="" class="w-10">
-                            </div>
-                        </div>
-                    </div>`;
-                customContainer.innerHTML += html;
-                if(name) fetchCityWeather(name, i);
-            });
-        }
-
-        async function fetchCityWeather(city, index) {
+        async function fetchCityWeather(city, elementId) {
             try {
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
                 const d = await res.json();
-                if(d.cod === 200) {
-                    document.getElementById(`temp-res-${index}`).innerText = Math.round(d.main.temp) + '°';
-                    document.getElementById(`icon-res-${index}`).src = `https://openweathermap.org/img/wn/${d.weather[0].icon}.png`;
-                }
+                document.getElementById(`temp-${elementId}`).innerText = Math.round(d.main.temp) + '°';
+                document.getElementById(`icon-${elementId}`).src = `https://openweathermap.org/img/wn/${d.weather[0].icon}.png`;
             } catch(e) {}
+        }
+
+        function getGPS() {
+            navigator.geolocation.getCurrentPosition(async p => {
+                const lat = p.coords.latitude; const lon = p.coords.longitude;
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lang=zh_tw&lat=${lat}&lon=${lon}`);
+                const d = await res.json();
+                const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`);
+                const geoData = await geoRes.json();
+                
+                const city = geoData[0]?.local_names?.['zh'] || geoData[0]?.name || "未知";
+                document.getElementById('g-city').innerText = city;
+                document.getElementById('g-temp').innerText = Math.round(d.main.temp) + '°';
+                document.getElementById('g-desc').innerText = d.weather[0].description;
+                document.getElementById('g-icon').src = `https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png`;
+                
+                document.getElementById('lock-w-icon').src = `https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png`;
+                document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°';
+                document.getElementById('lock-w-desc').innerText = d.weather[0].description;
+            });
         }
 
         function toggleLockScreen() {
