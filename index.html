@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JP v3.0</title>
+    <title>JP v3.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -17,7 +17,7 @@
         
         body.light-mode {
             --text-color: #1a1a1a;
-            --card-bg: rgba(255, 255, 255, 0.45); /* 淺色模式下增加不透明度確保毛玻璃感 */
+            --card-bg: rgba(255, 255, 255, 0.45);
             --tab-bg: rgba(245, 247, 250, 0.9);
             --base-bg: #f5f7fa;
         }
@@ -25,53 +25,43 @@
         body, html { 
             height: 100%; margin: 0; overflow: hidden; background: var(--base-bg); max-width: 500px; margin: 0 auto; 
             color: var(--text-color); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            transition: background 0.5s ease, color 0.5s ease;
         }
 
         .bg-layer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: var(--base-bg); background-image: var(--bg-img); 
             background-size: cover; background-position: center; 
-            z-index: 1; transition: 0.8s ease;
+            z-index: 1; transition: background-image 0.8s ease;
         }
 
         .content-layer { position: relative; width: 100%; height: 100%; z-index: 2; overflow: hidden; }
         
-        /* 嚴格分頁邏輯修正 */
         .page { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: none; flex-direction: column; overflow-y: auto; 
             padding-top: env(safe-area-inset-top); padding-bottom: 120px;
-            z-index: 5;
         }
-        .page.active { display: flex; animation: pageFadeIn 0.35s ease-out forwards; }
+        .page.active { display: flex; animation: pageFadeIn 0.3s ease-out; }
 
-        @keyframes pageFadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        @keyframes pageFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 終極毛玻璃模組 */
         .card-frosted { 
             background: var(--card-bg) !important;
             backdrop-filter: blur(var(--glass-blur)) saturate(220%) brightness(108%) !important;
             -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(220%) brightness(108%) !important;
-            border: 1.5px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(255,255,255,0.05);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
             border-radius: 35px;
             margin-bottom: 24px;
         }
 
         .tab-bar { 
             background: var(--tab-bg); 
-            backdrop-filter: blur(35px) saturate(160%); 
-            -webkit-backdrop-filter: blur(35px) saturate(160%); 
+            backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px); 
             border-top: 1px solid rgba(255, 255, 255, 0.1); 
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.05);
         }
-
-        /* 天氣發光色彩 */
-        .w-color-sun { color: #ff9f43; filter: drop-shadow(0 0 10px rgba(255,159,67,0.5)); }
-        .w-color-moon { color: #f6e05e; filter: drop-shadow(0 0 15px rgba(246,224,94,0.6)); }
-        .w-color-rain { color: #38bdf8; }
 
         #lock-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; 
@@ -79,8 +69,7 @@
             align-items: center; justify-content: flex-start; padding-top: 120px;
             backdrop-filter: blur(60px) brightness(80%); -webkit-backdrop-filter: blur(60px) brightness(80%);
         }
-        #lock-screen.active { display: flex; animation: lockIn 0.4s ease-out; }
-        @keyframes lockIn { from { opacity: 0; } to { opacity: 1; } }
+        #lock-screen.active { display: flex; }
     </style>
 </head>
 <body class="dark-mode">
@@ -93,7 +82,7 @@
             <div id="lock-w-icon-box" class="text-6xl"></div>
             <div class="text-white">
                 <p id="lock-w-temp" class="text-4xl font-black">--°</p>
-                <p id="lock-w-desc" class="font-bold opacity-50 uppercase text-xs">載入中</p>
+                <p id="lock-w-desc" class="font-bold opacity-50 text-xs uppercase">Loading</p>
             </div>
         </div>
     </div>
@@ -103,11 +92,11 @@
             <header class="p-8 pt-12 flex justify-between items-center">
                 <h1 class="text-4xl font-black italic tracking-tighter">JP</h1>
                 <div class="flex items-center space-x-3">
-                    <button onclick="toggleTheme()" id="theme-btn" class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-xl shadow-lg border border-white/10 active:scale-90 transition-transform">
+                    <button onclick="toggleTheme()" id="theme-btn" class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-xl border border-white/10">
                         <i class="fa-solid fa-moon"></i>
                     </button>
-                    <label class="text-[11px] font-black bg-white/10 px-5 py-3 rounded-full border border-white/10 active:opacity-50">
-                        背景 <input type="file" id="bg-upload" accept="image/*" class="hidden">
+                    <label class="text-[11px] font-black bg-white/10 px-5 py-3 rounded-full border border-white/10">
+                        更換背景 <input type="file" id="bg-upload" accept="image/*" class="hidden">
                     </label>
                 </div>
             </header>
@@ -119,24 +108,22 @@
                         <span class="text-2xl font-bold opacity-20">$</span>
                         <input type="number" id="twd-input" placeholder="0" inputmode="decimal" class="text-6xl font-black w-full text-center bg-transparent outline-none">
                     </div>
-                    <div class="mt-8">
-                        <div class="text-6xl font-black text-sky-500">¥ <span id="jpy-output">0</span></div>
-                        <p id="rate-info" class="text-[10px] opacity-40 mt-5 font-bold uppercase tracking-widest"></p>
-                    </div>
+                    <div class="mt-8 text-6xl font-black text-sky-500">¥ <span id="jpy-output">0</span></div>
+                    <p id="rate-info" class="text-[10px] opacity-40 mt-5 font-bold uppercase tracking-widest"></p>
                 </section>
 
-                <div class="grid grid-cols-2 gap-5 mt-4">
-                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center group">
-                        <i class="fa-solid fa-train-subway text-orange-400 text-3xl mb-4 group-active:scale-110 transition-transform"></i>
-                        <span class="font-bold text-[10px] uppercase tracking-widest">交通查詢</span>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center">
+                        <i class="fa-solid fa-train-subway text-orange-400 text-3xl mb-4"></i>
+                        <span class="font-bold text-[10px] uppercase">交通查詢</span>
                     </a>
-                    <a href="https://maps.google.com" target="_blank" class="card-frosted p-8 flex flex-col items-center group">
-                        <i class="fa-solid fa-map-location-dot text-blue-400 text-3xl mb-4 group-active:scale-110 transition-transform"></i>
-                        <span class="font-bold text-[10px] uppercase tracking-widest">地圖導航</span>
+                    <a href="https://maps.google.com" target="_blank" class="card-frosted p-8 flex flex-col items-center">
+                        <i class="fa-solid fa-map-location-dot text-blue-400 text-3xl mb-4"></i>
+                        <span class="font-bold text-[10px] uppercase">地圖導航</span>
                     </a>
                 </div>
                 <div class="text-center mt-6">
-                    <button onclick="toggleLockScreen()" class="text-[10px] font-black opacity-20 uppercase tracking-[0.6em]">Lock Preview</button>
+                    <button onclick="toggleLockScreen()" class="text-[10px] font-black opacity-20 uppercase tracking-[0.5em]">Preview Lockscreen</button>
                 </div>
             </main>
         </div>
@@ -146,15 +133,14 @@
                 <h2 class="text-2xl font-black italic tracking-widest uppercase">Weather</h2>
                 <button onclick="fetchAllWeather()" class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center border border-white/10 active:rotate-180 transition-transform"><i class="fa-solid fa-rotate"></i></button>
             </header>
-            <div id="weather-content" class="px-6 pb-12">
-                </div>
+            <div id="weather-content" class="px-6 pb-12"></div>
         </div>
     </div>
 
     <footer class="fixed bottom-10 left-0 right-0 z-50 px-10">
-        <div class="tab-bar rounded-full p-2.5 flex justify-around items-center max-w-[280px] mx-auto shadow-2xl">
-            <button onclick="showPage('home-page')" id="tab-home" class="flex-1 py-4 text-sky-500 transition-all"><i class="fa-solid fa-house-chimney text-xl"></i></button>
-            <button onclick="showPage('weather-page')" id="tab-weather" class="flex-1 py-4 opacity-30 transition-all"><i class="fa-solid fa-cloud-sun text-xl"></i></button>
+        <div class="tab-bar rounded-full p-2.5 flex justify-around items-center max-w-[260px] mx-auto shadow-2xl">
+            <button onclick="showPage('home-page')" id="tab-home" class="flex-1 py-4 text-sky-500"><i class="fa-solid fa-house-chimney text-xl"></i></button>
+            <button onclick="showPage('weather-page')" id="tab-weather" class="flex-1 py-4 opacity-30"><i class="fa-solid fa-cloud-sun text-xl"></i></button>
         </div>
     </footer>
 
@@ -162,70 +148,61 @@
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
 
-        // 頁面顯示邏輯修正
-        function showPage(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const activePage = document.getElementById(id);
-            activePage.classList.add('active');
-            
-            // 標籤樣式
-            document.getElementById('tab-home').classList.toggle('opacity-30', id !== 'home-page');
-            document.getElementById('tab-home').classList.toggle('text-sky-500', id === 'home-page');
-            document.getElementById('tab-weather').classList.toggle('opacity-30', id !== 'weather-page');
-            document.getElementById('tab-weather').classList.toggle('text-sky-500', id === 'weather-page');
-            
-            if(id === 'weather-page') fetchAllWeather();
+        // 修改後的背景套用邏輯：上傳背景即取消白晝/黑夜模式
+        function applyBg(src) { 
+            document.documentElement.style.setProperty('--bg-img', `url(${src})`);
+            // 核心修改：移除 Light Mode，回復最清澈的毛玻璃感
+            document.body.classList.remove('light-mode');
+            document.getElementById('theme-btn').innerHTML = '<i class="fa-solid fa-moon text-sky-300"></i>';
+            localStorage.setItem('theme', 'dark'); 
         }
 
-        // 模式切換邏輯
         function toggleTheme(force = null) {
             const body = document.body;
             const btn = document.getElementById('theme-btn');
             const isLight = force !== null ? force : !body.classList.contains('light-mode');
-            
             body.classList.toggle('light-mode', isLight);
             btn.innerHTML = isLight ? '<i class="fa-solid fa-sun text-orange-500"></i>' : '<i class="fa-solid fa-moon text-sky-300"></i>';
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
         }
 
-        // 初始化模式
+        // 初始化
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) toggleTheme(savedTheme === 'light');
-        else toggleTheme(new Date().getHours() >= 6 && new Date().getHours() < 18);
 
-        function getWeatherIconHTML(iconCode) {
-            const isNight = iconCode.endsWith('n');
-            const code = iconCode.substring(0, 2);
-            switch(code) {
-                case '01': return isNight ? '<i class="fa-solid fa-moon w-color-moon"></i>' : '<i class="fa-solid fa-sun w-color-sun"></i>';
-                case '02': return isNight ? '<i class="fa-solid fa-cloud-moon w-color-moon"></i>' : '<i class="fa-solid fa-cloud-sun w-color-sun"></i>';
-                case '03': case '04': return '<i class="fa-solid fa-cloud opacity-40"></i>';
-                case '09': case '10': return '<i class="fa-solid fa-cloud-showers-heavy w-color-rain"></i>';
-                case '11': return '<i class="fa-solid fa-cloud-bolt"></i>';
-                case '13': return '<i class="fa-solid fa-snowflake"></i>';
-                default: return '<i class="fa-solid fa-smog"></i>';
-            }
+        document.getElementById('bg-upload').addEventListener('change', e => {
+            const reader = new FileReader();
+            reader.onload = ev => { applyBg(ev.target.result); localStorage.setItem('user_bg_img', ev.target.result); };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        const savedBg = localStorage.getItem('user_bg_img');
+        if (savedBg) document.documentElement.style.setProperty('--bg-img', `url(${savedBg})`);
+
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('tab-home').classList.toggle('opacity-30', id !== 'home-page');
+            document.getElementById('tab-weather').classList.toggle('opacity-30', id !== 'weather-page');
+            if(id === 'weather-page') fetchAllWeather();
         }
 
         async function fetchAllWeather() {
             const container = document.getElementById('weather-content');
             container.innerHTML = `<div class="card-frosted p-8 border-l-[10px] border-sky-400">
-                <p class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-3">My Current City</p>
                 <div class="flex justify-between items-center"><p id="g-city" class="text-3xl font-black">Locating...</p><span id="g-temp" class="text-5xl font-black">--°</span></div>
                 <div id="g-icon-box" class="text-4xl mt-4"></div>
             </div>`;
-            
             const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
             const names = { 'Tokyo': '東京', 'Osaka': '大阪', 'Kyoto': '京都', 'Fukuoka': '福岡', 'Sapporo': '札幌' };
-            
             for(let city of cities) {
                 try {
                     const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
                     const d = await res.json();
                     container.innerHTML += `<div class="card-frosted p-7 flex justify-between items-center">
-                        <span class="font-black text-xl italic uppercase tracking-tighter">${names[city]}</span>
+                        <span class="font-black text-xl italic uppercase">${names[city]}</span>
                         <div class="flex items-center gap-6">
-                            <span class="font-black text-2xl tracking-tighter">${Math.round(d.main.temp)}°</span>
+                            <span class="font-black text-2xl">${Math.round(d.main.temp)}°</span>
                             <div class="text-3xl w-10 text-center">${getWeatherIconHTML(d.weather[0].icon)}</div>
                         </div>
                     </div>`;
@@ -248,21 +225,22 @@
             });
         }
 
-        function applyBg(src) { document.documentElement.style.setProperty('--bg-img', `url(${src})`); }
-        const savedBg = localStorage.getItem('user_bg_img');
-        if (savedBg) applyBg(savedBg);
-        document.getElementById('bg-upload').addEventListener('change', e => {
-            const reader = new FileReader();
-            reader.onload = ev => { applyBg(ev.target.result); localStorage.setItem('user_bg_img', ev.target.result); };
-            reader.readAsDataURL(e.target.files[0]);
-        });
+        function getWeatherIconHTML(iconCode) {
+            const isNight = iconCode.endsWith('n');
+            const code = iconCode.substring(0, 2);
+            switch(code) {
+                case '01': return isNight ? '<i class="fa-solid fa-moon text-yellow-200"></i>' : '<i class="fa-solid fa-sun text-orange-400"></i>';
+                case '02': return isNight ? '<i class="fa-solid fa-cloud-moon text-yellow-100"></i>' : '<i class="fa-solid fa-cloud-sun text-orange-300"></i>';
+                case '09': case '10': return '<i class="fa-solid fa-cloud-showers-heavy text-sky-400"></i>';
+                default: return '<i class="fa-solid fa-cloud opacity-40"></i>';
+            }
+        }
 
         async function updateRate() {
             const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json();
             currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `1 TWD = ${currentRate.toFixed(2)} JPY`;
         }
         document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
-
         function toggleLockScreen() { document.getElementById('lock-screen').classList.toggle('active'); updateTime(); }
         function updateTime() {
             const n = new Date();
@@ -270,10 +248,7 @@
             const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
             document.getElementById('lock-date').innerText = `${n.getMonth()+1}月${n.getDate()}日 ${days[n.getDay()]}`;
         }
-
-        setInterval(updateTime, 1000);
-        updateRate();
-        showPage('home-page');
+        setInterval(updateTime, 1000); updateRate(); showPage('home-page');
     </script>
 </body>
 </html>
