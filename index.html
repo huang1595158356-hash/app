@@ -3,30 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JP v3.1</title>
+    <title>JP v3.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { 
             --bg-img: none; --text-color: #ffffff; 
-            --card-bg: rgba(255, 255, 255, 0.08); 
-            --tab-bg: rgba(20, 20, 20, 0.85); 
+            --card-bg: rgba(25, 25, 25, 0.4); /* 增加底色濃度以達成霧面感 */
+            --tab-bg: rgba(20, 20, 20, 0.9); 
             --glass-blur: 40px; 
             --base-bg: #0a0a0a;
         }
         
         body.light-mode {
             --text-color: #1a1a1a;
-            --card-bg: rgba(255, 255, 255, 0.45);
-            --tab-bg: rgba(245, 247, 250, 0.9);
+            --card-bg: rgba(240, 240, 240, 0.7); /* 霧面淺色質感 */
+            --tab-bg: rgba(255, 255, 255, 0.95);
             --base-bg: #f5f7fa;
         }
 
         body, html { 
             height: 100%; margin: 0; overflow: hidden; background: var(--base-bg); max-width: 500px; margin: 0 auto; 
             color: var(--text-color); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            transition: background 0.5s ease, color 0.5s ease;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            transition: background 0.5s ease;
         }
 
         .bg-layer { 
@@ -47,12 +47,13 @@
 
         @keyframes pageFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* 修改為霧面樣式 (Matte Effect) */
         .card-frosted { 
             background: var(--card-bg) !important;
-            backdrop-filter: blur(var(--glass-blur)) saturate(220%) brightness(108%) !important;
-            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(220%) brightness(108%) !important;
-            border: 1.5px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            backdrop-filter: blur(var(--glass-blur)) saturate(120%) contrast(90%) !important; /* 降低飽和度與對比度來模擬霧面 */
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(120%) contrast(90%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             border-radius: 35px;
             margin-bottom: 24px;
         }
@@ -65,7 +66,7 @@
 
         #lock-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; 
-            background: rgba(0,0,0,0.4); display: none; flex-direction: column; 
+            background: rgba(0,0,0,0.45); display: none; flex-direction: column; 
             align-items: center; justify-content: flex-start; padding-top: 120px;
             backdrop-filter: blur(60px) brightness(80%); -webkit-backdrop-filter: blur(60px) brightness(80%);
         }
@@ -82,7 +83,7 @@
             <div id="lock-w-icon-box" class="text-6xl"></div>
             <div class="text-white">
                 <p id="lock-w-temp" class="text-4xl font-black">--°</p>
-                <p id="lock-w-desc" class="font-bold opacity-50 text-xs uppercase">Loading</p>
+                <p id="lock-w-desc" class="font-bold opacity-50 text-xs uppercase italic">Syncing</p>
             </div>
         </div>
     </div>
@@ -91,12 +92,15 @@
         <div id="home-page" class="page active">
             <header class="p-8 pt-12 flex justify-between items-center">
                 <h1 class="text-4xl font-black italic tracking-tighter">JP</h1>
-                <div class="flex items-center space-x-3">
-                    <button onclick="toggleTheme()" id="theme-btn" class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-xl border border-white/10">
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleLockScreen()" class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-lg border border-white/10 active:scale-90 transition-transform">
+                        <i class="fa-solid fa-lock"></i>
+                    </button>
+                    <button onclick="toggleTheme()" id="theme-btn" class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-xl border border-white/10 active:scale-90">
                         <i class="fa-solid fa-moon"></i>
                     </button>
-                    <label class="text-[11px] font-black bg-white/10 px-5 py-3 rounded-full border border-white/10">
-                        更換背景 <input type="file" id="bg-upload" accept="image/*" class="hidden">
+                    <label class="text-[11px] font-black bg-white/10 px-5 py-3 rounded-full border border-white/10 active:opacity-60">
+                        背景 <input type="file" id="bg-upload" accept="image/*" class="hidden">
                     </label>
                 </div>
             </header>
@@ -115,15 +119,12 @@
                 <div class="grid grid-cols-2 gap-4 mt-4">
                     <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center">
                         <i class="fa-solid fa-train-subway text-orange-400 text-3xl mb-4"></i>
-                        <span class="font-bold text-[10px] uppercase">交通查詢</span>
+                        <span class="font-bold text-[10px] uppercase tracking-tighter">交通查詢</span>
                     </a>
                     <a href="https://maps.google.com" target="_blank" class="card-frosted p-8 flex flex-col items-center">
                         <i class="fa-solid fa-map-location-dot text-blue-400 text-3xl mb-4"></i>
-                        <span class="font-bold text-[10px] uppercase">地圖導航</span>
+                        <span class="font-bold text-[10px] uppercase tracking-tighter">地圖導航</span>
                     </a>
-                </div>
-                <div class="text-center mt-6">
-                    <button onclick="toggleLockScreen()" class="text-[10px] font-black opacity-20 uppercase tracking-[0.5em]">Preview Lockscreen</button>
                 </div>
             </main>
         </div>
@@ -148,10 +149,9 @@
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
 
-        // 修改後的背景套用邏輯：上傳背景即取消白晝/黑夜模式
+        // 背景與模式邏輯
         function applyBg(src) { 
             document.documentElement.style.setProperty('--bg-img', `url(${src})`);
-            // 核心修改：移除 Light Mode，回復最清澈的毛玻璃感
             document.body.classList.remove('light-mode');
             document.getElementById('theme-btn').innerHTML = '<i class="fa-solid fa-moon text-sky-300"></i>';
             localStorage.setItem('theme', 'dark'); 
@@ -166,7 +166,6 @@
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
         }
 
-        // 初始化
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) toggleTheme(savedTheme === 'light');
 
