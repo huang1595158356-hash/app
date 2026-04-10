@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>旅遊工具 v5.6 - 降雨機率強化版</title>
+    <title>旅遊工具 v5.8 - 動態天氣版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -18,7 +18,8 @@
         body, html { height: 100%; margin: 0; overflow: hidden; background: var(--base-bg); max-width: 500px; margin: 0 auto; color: var(--text-color); font-family: "Inter", "PingFang TC", "Microsoft JhengHei", sans-serif; transition: background 0.5s ease; }
         
         .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--base-bg); background-image: var(--bg-img); background-size: cover; background-position: center; z-index: 1; transition: filter 0.5s ease; }
-        .content-layer { position: relative; width: 100%; height: 100%; z-index: 2; overflow: hidden; }
+        #weather-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        .content-layer { position: relative; width: 100%; height: 100%; z-index: 3; overflow: hidden; }
         
         .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; overflow-y: auto; padding-top: env(safe-area-inset-top); padding-bottom: 140px; }
         .page.active { display: flex; animation: pageFade 0.4s ease-out; }
@@ -31,12 +32,13 @@
         #lock-screen.active { display: flex; }
         .vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
 
-        .tab-bar { background: var(--tab-bg); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .tab-bar { background: var(--tab-bg); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); z-index: 50; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="dark-mode">
     <div class="bg-layer" id="main-bg"></div>
+    <canvas id="weather-canvas"></canvas>
 
     <div id="lock-screen" onclick="toggleLockScreen()">
         <div class="flex justify-between items-start w-full">
@@ -44,7 +46,7 @@
                 <p id="lock-time" class="text-7xl font-black text-white tracking-tighter leading-none">00:00</p>
                 <div class="flex items-center gap-3 mt-4">
                     <span class="bg-sky-500 text-white text-[10px] px-2 py-0.5 font-black rounded italic">GMT+8</span>
-                    <p id="lock-date" class="text-lg font-bold text-white/60">搜尋中...</p>
+                    <p id="lock-date" class="text-lg font-bold text-white/60">同步中...</p>
                 </div>
             </div>
             <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase italic">Travel Toolkit Sync</div>
@@ -54,12 +56,12 @@
                 <div class="flex justify-between items-end">
                     <div>
                         <p id="lock-city" class="text-[10px] font-black opacity-40 mb-1 uppercase tracking-widest italic">搜尋中...</p>
-                        <p id="lock-w-desc" class="text-xl font-black text-white">等待衛星同步...</p>
+                        <p id="lock-w-desc" class="text-xl font-black text-white">等待衛星資料...</p>
                     </div>
                     <div id="lock-w-icon-box" class="text-5xl mb-1"></div>
                 </div>
             </div>
-            <p class="text-center text-[10px] font-black opacity-30 mt-6 tracking-[0.5em] uppercase">點擊螢幕進入工具</p>
+            <p class="text-center text-[10px] font-black opacity-30 mt-6 tracking-[0.5em] uppercase">點擊螢幕解鎖進入</p>
         </div>
     </div>
 
@@ -80,15 +82,15 @@
                     <p class="text-[10px] font-black tracking-[0.6em] opacity-30 mb-8 uppercase">即時匯率換算 (TWD ⮕ JPY)</p>
                     <input type="number" id="twd-input" placeholder="輸入台幣" inputmode="decimal" class="text-6xl font-black w-full text-center bg-transparent outline-none">
                     <div class="mt-8 text-5xl font-black text-sky-500">¥ <span id="jpy-output">0</span></div>
-                    <p id="rate-info" class="text-[10px] opacity-40 mt-5 font-bold uppercase">正在搜尋匯率數據...</p>
+                    <p id="rate-info" class="text-[10px] opacity-40 mt-5 font-bold uppercase">載入匯率中...</p>
                 </section>
 
                 <div class="grid grid-cols-2 gap-4 mt-2">
-                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center group">
+                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center">
                         <i class="fa-solid fa-route text-orange-400 text-2xl mb-3"></i>
                         <span class="font-bold text-[10px] uppercase">乘換案內</span>
                     </a>
-                    <a href="https://www.google.com/maps" target="_blank" class="card-frosted p-8 flex flex-col items-center group">
+                    <a href="https://www.google.com/maps" target="_blank" class="card-frosted p-8 flex flex-col items-center">
                         <i class="fa-solid fa-location-crosshairs text-blue-400 text-2xl mb-3"></i>
                         <span class="font-bold text-[10px] uppercase">精確導航</span>
                     </a>
@@ -115,172 +117,163 @@
     <script>
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
+        let weatherEngine;
 
-        function getWindDir(deg) {
-            const arr = ["北","東北","東","東南","南","西南","西","西北"];
-            return arr[Math.round(deg / 45) % 8];
+        // --- 動態天氣動畫類別 ---
+        class WeatherParticleEngine {
+            constructor() {
+                this.canvas = document.getElementById('weather-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.type = 'clear';
+                this.active = false;
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+            resize() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; }
+            setWeather(type) {
+                const main = type.toLowerCase();
+                if (main.includes('rain') || main.includes('drizzle')) this.type = 'rain';
+                else if (main.includes('snow')) this.type = 'snow';
+                else if (main.includes('cloud')) this.type = 'clouds';
+                else this.type = 'clear';
+                this.initParticles();
+                if (!this.active) { this.active = true; this.animate(); }
+            }
+            initParticles() {
+                this.particles = [];
+                let count = (this.type === 'rain') ? 80 : (this.type === 'snow' ? 50 : (this.type === 'clouds' ? 5 : 0));
+                for (let i = 0; i < count; i++) this.particles.push(this.createParticle());
+            }
+            createParticle() {
+                const w = this.canvas.width, h = this.canvas.height;
+                if (this.type === 'rain') return { x: Math.random()*w, y: Math.random()*h, l: Math.random()*15+10, v: Math.random()*12+8, a: Math.random()*2-1 };
+                if (this.type === 'snow') return { x: Math.random()*w, y: Math.random()*h, r: Math.random()*3+1, v: Math.random()*2+1, ny: Math.random()*1 };
+                if (this.type === 'clouds') return { x: Math.random()*w, y: Math.random()*h*0.4, r: Math.random()*120+60, v: Math.random()*0.4+0.1, o: Math.random()*0.2+0.1 };
+                return {};
+            }
+            animate() {
+                if (!this.active || this.type === 'clear') { this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); return; }
+                this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+                const isDark = !document.body.classList.contains('light-mode');
+                const colorBase = isDark ? '255, 255, 255, ' : '100, 100, 100, ';
+                const w = this.canvas.width, h = this.canvas.height;
+
+                for (let p of this.particles) {
+                    this.ctx.fillStyle = `rgba(${colorBase}${p.o || 0.6})`;
+                    this.ctx.strokeStyle = `rgba(${colorBase}0.4)`;
+                    if (this.type === 'rain') {
+                        this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x+p.a, p.y+p.l); this.ctx.stroke();
+                        p.y += p.v; p.x += p.a; if (p.y > h) { p.y = -p.l; p.x = Math.random()*w; }
+                    } else if (this.type === 'snow') {
+                        this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); this.ctx.fill();
+                        p.y += p.v; p.x += Math.sin(p.y*0.01)*p.ny; if (p.y > h) { p.y = -p.r; p.x = Math.random()*w; }
+                    } else if (this.type === 'clouds') {
+                        this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); this.ctx.fill();
+                        p.x += p.v; if (p.x - p.r > w) { p.x = -p.r; p.y = Math.random()*h*0.4; }
+                    }
+                }
+                requestAnimationFrame(() => this.animate());
+            }
         }
+        weatherEngine = new WeatherParticleEngine();
 
+        // --- 氣象與功能邏輯 ---
+        function getWindDir(deg) { const arr = ["北","東北","東","東南","南","西南","西","西北"]; return arr[Math.round(deg/45)%8]; }
         async function getBilingualName(lat, lon, fallback) {
             try {
-                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
-                const res = await fetch(geoUrl);
+                const res = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`);
                 const data = await res.json();
                 if (data && data[0]) {
                     const zh = data[0].local_names?.['zh'] || data[0].local_names?.['zh-tw'] || "";
-                    const en = data[0].name;
-                    return (zh && zh !== en) ? `${en} / ${zh}` : en || fallback;
+                    return (zh && zh !== data[0].name) ? `${data[0].name} / ${zh}` : data[0].name || fallback;
                 }
-            } catch (e) {}
-            return fallback;
+            } catch(e) {} return fallback;
         }
-
-        async function getCityZH(cityName) {
-            try {
-                const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`);
-                const data = await res.json();
-                if (data && data[0]) {
-                    const zh = data[0].local_names?.['zh'] || data[0].local_names?.['zh-tw'] || "";
-                    return zh ? `${cityName} / ${zh}` : cityName;
-                }
-            } catch (e) {}
-            return cityName;
-        }
-
-        function showPage(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.getElementById('tab-home').classList.toggle('opacity-30', id !== 'home-page');
-            document.getElementById('tab-home').classList.toggle('text-sky-500', id === 'home-page');
-            document.getElementById('tab-weather').classList.toggle('opacity-30', id !== 'weather-page');
-            document.getElementById('tab-weather').classList.toggle('text-sky-500', id === 'weather-page');
-            if(id === 'weather-page') fetchAllWeather();
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
-            document.getElementById('theme-btn').innerHTML = isLight ? '<i class="fa-solid fa-sun text-orange-500"></i>' : '<i class="fa-solid fa-moon text-sky-300"></i>';
-        }
-
-        document.getElementById('bg-upload').onchange = function(e) {
-            const reader = new FileReader();
-            reader.onload = function() {
-                document.getElementById('main-bg').style.backgroundImage = `url(${reader.result})`;
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        };
 
         async function fetchAllWeather() {
             const container = document.getElementById('weather-content');
-            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在搜尋各城市大氣數據...</div>`;
-            
+            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">大氣數據同步中...</div>`;
             navigator.geolocation.getCurrentPosition(async p => {
                 const { latitude: lat, longitude: lon } = p.coords;
-                const currentName = await getBilingualName(lat, lon, "搜尋中...");
-                
-                // 獲取當前天氣
+                const name = await getBilingualName(lat, lon, "目前位置");
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${lat}&lon=${lon}&lang=zh_tw`);
                 const d = await res.json();
                 
-                let html = generateWeatherCard(currentName, d, "目前位置", true);
-                
-                const cities = ['Tokyo', 'Osaka', 'Kyoto'];
-                for(let city of cities) {
-                    const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
-                    const dc = await resC.json();
-                    const zhTitle = await getCityZH(city);
-                    html += generateWeatherCard(zhTitle, dc, "日本城市", false);
+                weatherEngine.setWeather(d.weather[0].main); // 設定動畫
+
+                let html = generateWeatherCard(name, d, "目前位置", true);
+                for(let city of ['Tokyo', 'Osaka', 'Kyoto']) {
+                    const rc = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
+                    const dc = await rc.json();
+                    html += generateWeatherCard(city, dc, "日本城市", false);
                 }
                 container.innerHTML = html;
-
-                document.getElementById('lock-city').innerText = currentName;
+                document.getElementById('lock-city').innerText = name;
                 document.getElementById('lock-w-desc').innerText = `${d.weather[0].description} ${Math.round(d.main.temp)}°C`;
                 document.getElementById('lock-w-icon-box').innerHTML = getWeatherIcon(d.weather[0].icon);
-            }, () => {
-                container.innerHTML = `<div class="p-8 text-center opacity-50 font-bold">請開啟 GPS 以搜尋當地天氣資訊</div>`;
             });
         }
 
         function generateWeatherCard(title, d, label, isMain = false) {
-            // 抓取降雨機率，如果當前 API 層級沒提供 pop 數據，則判斷雲量或天氣描述
-            const popValue = (d.pop !== undefined) ? `${Math.round(d.pop * 100)}%` : (d.clouds ? `${d.clouds.all}%` : "0%");
-            
+            const pop = (d.pop !== undefined) ? `${Math.round(d.pop*100)}%` : (d.clouds ? `${d.clouds.all}%` : "0%");
+            const wind = Math.round(d.wind.speed * 3.6);
             return `
             <div class="card-frosted p-6 ${isMain ? 'border-l-4 border-sky-500' : ''}">
                 <div class="flex justify-between items-start">
-                    <div>
-                        <span class="text-[9px] font-black bg-white/10 text-white/60 px-2 py-0.5 rounded uppercase tracking-tighter">${label}</span>
-                        <p class="text-lg font-black mt-1 leading-tight">${title || '搜尋中...'}</p>
-                    </div>
+                    <div><span class="text-[9px] font-black bg-white/10 text-white/60 px-2 py-0.5 rounded uppercase">${label}</span><p class="text-lg font-black mt-1">${title}</p></div>
                     <div class="text-3xl">${getWeatherIcon(d.weather[0].icon)}</div>
                 </div>
-                <div class="flex items-end gap-2 mt-4">
-                    <span class="text-4xl font-black">${Math.round(d.main.temp)}°</span>
-                    <span class="text-xs font-bold opacity-40 mb-1">${d.weather[0].description || '搜尋中'}</span>
-                </div>
+                <div class="flex items-end gap-2 mt-4"><span class="text-4xl font-black">${Math.round(d.main.temp)}°</span><span class="text-xs font-bold opacity-40 mb-1">${d.weather[0].description}</span></div>
                 <div class="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/5">
-                    <div class="text-center">
-                        <p class="text-[9px] font-black opacity-30 uppercase">風向風速</p>
-                        <p class="text-xs font-bold">${getWindDir(d.wind.deg)} ${Math.round(d.wind.speed)}m/s</p>
-                    </div>
-                    <div class="text-center border-x border-white/5">
-                        <p class="text-[9px] font-black opacity-30 uppercase">濕度</p>
-                        <p class="text-xs font-bold">${d.main.humidity}%</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[9px] font-black opacity-30 uppercase">降雨機率</p>
-                        <p class="text-xs font-bold text-sky-400">${popValue}</p>
-                    </div>
+                    <div class="text-center"><p class="text-[9px] font-black opacity-30">風向/風速</p><p class="text-xs font-bold">${getWindDir(d.wind.deg)} ${wind}km/h</p></div>
+                    <div class="text-center border-x border-white/5"><p class="text-[9px] font-black opacity-30">濕度</p><p class="text-xs font-bold">${d.main.humidity}%</p></div>
+                    <div class="text-center"><p class="text-[9px] font-black opacity-30">降雨機率</p><p class="text-xs font-bold text-sky-400">${pop}</p></div>
                 </div>
             </div>`;
         }
 
         function getWeatherIcon(code) {
-            const isNight = code.endsWith('n');
-            const c = code.substring(0, 2);
+            const isNight = code.endsWith('n'), c = code.substring(0, 2);
             switch(c) {
                 case '01': return isNight ? '<i class="fa-solid fa-moon text-yellow-200"></i>' : '<i class="fa-solid fa-sun text-orange-400"></i>';
                 case '02': return isNight ? '<i class="fa-solid fa-cloud-moon text-blue-200"></i>' : '<i class="fa-solid fa-cloud-sun text-orange-200"></i>';
                 case '03': case '04': return '<i class="fa-solid fa-cloud opacity-60 text-white"></i>';
                 case '09': case '10': return '<i class="fa-solid fa-cloud-showers-water text-sky-400"></i>';
-                case '11': return '<i class="fa-solid fa-cloud-bolt text-yellow-400"></i>';
                 case '13': return '<i class="fa-solid fa-snowflake text-white"></i>';
                 default: return '<i class="fa-solid fa-smog opacity-40"></i>';
             }
         }
 
-        async function updateRate() {
-            try {
-                const r = await fetch('https://open.er-api.com/v6/latest/TWD');
-                const d = await r.json();
-                currentRate = d.rates.JPY;
-                document.getElementById('rate-info').innerText = `目前匯率：1 台幣 = ${currentRate.toFixed(2)} 日圓`;
-            } catch(e) {
-                document.getElementById('rate-info').innerText = `匯率搜尋失敗，使用緩存數據`;
-            }
+        // --- 基礎系統邏輯 ---
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('tab-home').classList.toggle('opacity-30', id !== 'home-page');
+            document.getElementById('tab-weather').classList.toggle('opacity-30', id !== 'weather-page');
+            if(id === 'weather-page') fetchAllWeather();
         }
-
-        document.getElementById('twd-input').oninput = e => {
-            const val = e.target.value;
-            document.getElementById('jpy-output').innerText = val ? Math.round(val * currentRate).toLocaleString() : '0';
-        };
-
-        function toggleLockScreen() {
-            document.getElementById('lock-screen').classList.toggle('active');
-            updateTime();
-        }
-
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
+        function toggleLockScreen() { document.getElementById('lock-screen').classList.toggle('active'); updateTime(); }
         function updateTime() {
             const n = new Date();
             document.getElementById('lock-time').innerText = n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
             const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
             document.getElementById('lock-date').innerText = `${n.getMonth()+1}月${n.getDate()}日 ${days[n.getDay()]}`;
         }
+        async function updateRate() {
+            const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json();
+            currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `目前匯率：1 台幣 = ${currentRate.toFixed(2)} 日圓`;
+        }
+        document.getElementById('twd-input').oninput = e => {
+            const val = e.target.value; document.getElementById('jpy-output').innerText = val ? Math.round(val * currentRate).toLocaleString() : '0';
+        };
+        document.getElementById('bg-upload').onchange = e => {
+            const reader = new FileReader(); reader.onload = () => document.getElementById('main-bg').style.backgroundImage = `url(${reader.result})`;
+            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+        };
 
-        setInterval(updateTime, 1000);
-        updateRate();
-        updateTime();
+        setInterval(updateTime, 1000); updateRate(); updateTime();
     </script>
 </body>
 </html>
