@@ -1,9 +1,9 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-Hant-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>旅遊工具 v6.0 - Gemini AI 增強版</title>
+    <title>旅遊工具 v6.2 - 精簡穩定版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -34,388 +34,207 @@
             box-shadow: 0 12px 35px rgba(0,0,0,0.25);
         }
 
-        #lock-screen { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 200; 
-            background: rgba(0,0,0,0.5); display: none; flex-direction: column; padding: 100px 40px; 
-            backdrop-filter: blur(70px); -webkit-backdrop-filter: blur(70px); 
-        }
-        #lock-screen.active { display: flex; }
-
         .tab-bar { background: var(--tab-bg); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); z-index: 150; }
         .nav-btn.active { color: var(--accent); }
 
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
         input { border: none; background: transparent; outline: none; text-align: right; color: inherit; }
-        
-        /* Loading animation for AI */
-        .ai-glow { animation: glow 2s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 0 5px rgba(14, 165, 233, 0.2); } to { box-shadow: 0 0 20px rgba(14, 165, 233, 0.6); } }
     </style>
 </head>
 <body class="dark-mode">
     <div class="bg-layer" id="main-bg"></div>
 
-    <!-- 鎖定畫面 -->
-    <div id="lock-screen" onclick="toggleLockScreen()">
-        <div class="flex justify-between items-start w-full">
-            <div class="flex flex-col">
-                <p id="lock-time" class="text-7xl font-black text-white tracking-tighter leading-none">00:00</p>
-                <div class="flex items-center gap-3 mt-4">
-                    <span class="bg-sky-500 text-white text-[10px] px-2 py-0.5 font-black rounded italic">AI 已就緒</span>
-                    <p id="lock-date" class="text-lg font-bold text-white/60">載入中...</p>
-                </div>
-            </div>
-        </div>
-        <div class="mt-auto w-full">
-            <div class="card-frosted p-8 border-l-4 border-sky-500">
-                <div class="flex justify-between items-end">
-                    <div>
-                        <p id="lock-city" class="text-[10px] font-black opacity-40 mb-1 uppercase tracking-widest italic">當地即時氣象</p>
-                        <p id="lock-w-desc" class="text-xl font-black text-white">點擊進入系統</p>
-                    </div>
-                    <div id="lock-w-icon-box" class="text-5xl mb-1"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="content-layer">
-        <!-- 主頁 -->
+        <!-- 主頁面：匯率功能 -->
         <div id="home-page" class="page active">
             <header class="p-8 pt-14 flex justify-between items-center">
-                <h1 class="text-3xl font-black italic tracking-tighter">旅遊工具</h1>
+                <h1 class="text-3xl font-black italic tracking-tighter">旅遊助手</h1>
                 <div class="flex items-center space-x-2">
-                    <button onclick="toggleLockScreen()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:scale-90"><i class="fa-solid fa-expand"></i></button>
                     <button onclick="toggleTheme()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:scale-90"><i class="fa-solid fa-circle-half-stroke"></i></button>
+                    <label class="text-[10px] font-black bg-white/5 px-4 py-3 rounded-full border border-white/10 cursor-pointer">更換壁紙<input type="file" id="bg-upload" accept="image/*" class="hidden"></label>
                 </div>
             </header>
             
             <main class="px-6">
-                <!-- AI 旅遊靈感 -->
-                <section id="ai-suggestion-box" class="card-frosted p-6 mb-6 border-t border-sky-500/30 overflow-hidden relative">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-wand-magic-sparkles text-sky-400"></i>
-                            <span class="text-xs font-black tracking-widest uppercase opacity-60">AI 旅遊靈感</span>
-                        </div>
-                        <button onclick="generateAiPlan()" class="text-[10px] font-bold bg-sky-500/20 text-sky-400 px-3 py-1 rounded-full border border-sky-500/30 active:scale-95 transition-all">✨ 重新生成</button>
-                    </div>
-                    <div id="ai-text" class="text-sm leading-relaxed opacity-90 min-h-[60px]">
-                        點擊按鈕，讓 AI 根據當前天氣為您規劃行程...
-                    </div>
-                    <div id="ai-loading" class="hidden absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
-                        <div class="flex flex-col items-center">
-                            <div class="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-                            <span class="text-[10px] mt-2 font-bold tracking-widest">構思中...</span>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 匯率 -->
+                <!-- 匯率轉換卡片 -->
                 <section class="card-frosted p-8 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-sky-500"></div>
+                    <p class="text-[11px] font-black tracking-[0.5em] opacity-30 mb-8 uppercase text-center">雙向即時匯率換算</p>
+                    
                     <div class="space-y-6">
                         <div class="flex items-center justify-between border-b border-white/5 pb-4">
                             <span class="text-lg font-black italic opacity-50">TWD</span>
                             <div class="flex items-center">
                                 <span class="text-2xl font-black mr-2 text-sky-500">¥</span>
-                                <input type="number" id="twd-input" placeholder="0" class="text-4xl font-black w-full">
+                                <input type="number" id="twd-input" placeholder="0" inputmode="decimal" class="text-4xl font-black w-full">
                             </div>
                         </div>
                         <div class="flex items-center justify-between pt-2">
                             <span class="text-lg font-black italic opacity-50">JPY</span>
                             <div class="flex items-center">
                                 <span class="text-2xl font-black mr-2 text-sky-500">¥</span>
-                                <input type="number" id="jpy-input" placeholder="0" class="text-4xl font-black w-full">
+                                <input type="number" id="jpy-input" placeholder="0" inputmode="decimal" class="text-4xl font-black w-full">
                             </div>
                         </div>
                     </div>
-                    <p id="rate-info" class="text-[10px] opacity-30 mt-8 font-bold text-center">正在同步匯率...</p>
+                    
+                    <p id="rate-info" class="text-[10px] opacity-30 mt-8 font-bold uppercase tracking-widest text-center">正在抓取最新市場行情...</p>
                 </section>
 
-                <!-- 快捷連結 -->
+                <!-- 導航快捷鍵 -->
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center">
-                        <i class="fa-solid fa-route text-orange-400 text-2xl mb-3"></i>
-                        <span class="font-bold text-[11px] uppercase">乘換案內</span>
+                        <i class="fa-solid fa-train-subway text-orange-400 text-2xl mb-3"></i>
+                        <span class="font-bold text-[11px] uppercase tracking-wider">交通查詢</span>
                     </a>
                     <a href="https://www.google.com/maps" target="_blank" class="card-frosted p-8 flex flex-col items-center">
-                        <i class="fa-solid fa-location-crosshairs text-blue-400 text-2xl mb-3"></i>
-                        <span class="font-bold text-[11px] uppercase">地圖導航</span>
+                        <i class="fa-solid fa-map-location-dot text-blue-400 text-2xl mb-3"></i>
+                        <span class="font-bold text-[11px] uppercase tracking-wider">地圖導航</span>
                     </a>
                 </div>
             </main>
         </div>
 
-        <!-- 氣象頁 -->
+        <!-- 天氣資訊頁面 -->
         <div id="weather-page" class="page">
             <header class="p-8 pt-14 flex justify-between items-center">
-                <h2 class="text-2xl font-black italic text-sky-500">即時氣象</h2>
-                <div class="flex gap-2">
-                    <button onclick="readWeatherAi()" class="w-10 h-10 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/30 active:scale-90 transition-all" title="AI 語音簡報">
-                        <i class="fa-solid fa-volume-high"></i>
-                    </button>
-                    <button onclick="fetchAllWeather()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:rotate-180 transition-all">
-                        <i class="fa-solid fa-arrows-rotate"></i>
-                    </button>
-                </div>
+                <h2 class="text-2xl font-black italic tracking-widest text-sky-500">目的地天氣</h2>
+                <button onclick="fetchAllWeather()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:rotate-180 transition-transform"><i class="fa-solid fa-arrows-rotate"></i></button>
             </header>
             <div id="weather-content" class="px-6 pb-24 space-y-4"></div>
         </div>
     </div>
 
-    <!-- 底部導航 -->
+    <!-- 底部導覽列 -->
     <footer class="fixed bottom-10 left-0 right-0 z-[150] px-10">
         <div class="tab-bar rounded-2xl p-2.5 flex justify-around items-center max-w-[260px] mx-auto shadow-2xl">
-            <button onclick="showPage('home-page')" id="tab-home" class="nav-btn active flex-1 py-4 transition-all"><i class="fa-solid fa-compass text-xl"></i></button>
+            <button onclick="showPage('home-page')" id="tab-home" class="nav-btn active flex-1 py-4 transition-all"><i class="fa-solid fa-wallet text-xl"></i></button>
             <button onclick="showPage('weather-page')" id="tab-weather" class="nav-btn opacity-30 flex-1 py-4 transition-all"><i class="fa-solid fa-cloud-sun text-xl"></i></button>
         </div>
     </footer>
 
     <script>
-        const apiKey = ""; // Gemini API key provided by env
         const WEATHER_API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
-        let currentRate = 4.75;
-        let lastWeather = null;
-        let lastCity = "未知地點";
+        let currentRate = 4.75; 
 
-        // --- Gemini API 整合 ---
-
-        async function callGemini(prompt, systemPrompt = "") {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            let retries = 0;
-            const maxRetries = 5;
-
-            while (retries < maxRetries) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }],
-                            systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined
-                        })
-                    });
-                    const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text;
-                } catch (e) {
-                    retries++;
-                    await new Promise(r => setTimeout(r, Math.pow(2, retries) * 1000));
-                }
-            }
-            throw new Error("AI 請求失敗");
-        }
-
-        async function generateAiPlan() {
-            if (!lastWeather) {
-                document.getElementById('ai-text').innerText = "請先獲取天氣數據...";
-                return;
-            }
-
-            const loading = document.getElementById('ai-loading');
-            loading.classList.remove('hidden');
-
-            const prompt = `目前的城市是 ${lastCity}，天氣是 ${lastWeather.weather[0].description}，溫度為 ${Math.round(lastWeather.main.temp)}度。請提供 2-3 句適合這個天氣的簡短旅遊建議或靈魂小語（繁體中文）。`;
-            const system = "你是一位熱愛旅行的貼心嚮導，說話語氣活潑且充滿詩意。";
-
-            try {
-                const result = await callGemini(prompt, system);
-                document.getElementById('ai-text').innerText = result;
-            } catch (e) {
-                document.getElementById('ai-text').innerText = "AI 暫時迷路了，請稍後再試。";
-            } finally {
-                loading.classList.add('hidden');
-            }
-        }
-
-        async function readWeatherAi() {
-            if (!lastWeather) return;
-
-            const text = `嘿！現在${lastCity}的天氣是${lastWeather.weather[0].description}，氣溫約${Math.round(lastWeather.main.temp)}度，體感溫度則是${Math.round(lastWeather.main.feels_like)}度。記得做好防護再出門喔！`;
-            
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Say in a warm and friendly voice: ${text}` }] }],
-                        generationConfig: {
-                            responseModalities: ["AUDIO"],
-                            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } } }
-                        }
-                    })
-                });
-
-                const result = await response.json();
-                const pcmData = result.candidates[0].content.parts[0].inlineData.data;
-                const audioBlob = pcmToWav(pcmData, 24000); // 假設採樣率 24k
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-                audio.play();
-            } catch (e) {
-                console.error("TTS 失敗", e);
-            }
-        }
-
-        // 簡易 PCM 轉 WAV
-        function pcmToWav(base64, sampleRate) {
-            const buffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
-            const wavBuffer = new ArrayBuffer(44 + buffer.byteLength);
-            const view = new DataView(wavBuffer);
-
-            const writeString = (offset, string) => {
-                for (let i = 0; i < string.length; i++) {
-                    view.setUint8(offset + i, string.charCodeAt(i));
-                }
-            };
-
-            writeString(0, 'RIFF');
-            view.setUint32(4, 36 + buffer.byteLength, true);
-            writeString(8, 'WAVE');
-            writeString(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, 1, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * 2, true);
-            view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true);
-            writeString(36, 'data');
-            view.setUint32(40, buffer.byteLength, true);
-
-            const pcmView = new Uint8Array(buffer);
-            const wavBytes = new Uint8Array(wavBuffer);
-            wavBytes.set(pcmView, 44);
-
-            return new Blob([wavBytes], { type: 'audio/wav' });
-        }
-
-        // --- 原始邏輯改進 ---
-
+        // 城市名稱翻譯
         const cityNames = { 'Tokyo': '東京', 'Osaka': '大阪', 'Kyoto': '京都', 'Taipei': '台北', 'Chaozhou': '潮州' };
-        function getWindDir(deg) { const arr = ["北","東北","東","東南","南","西南","西","西北"]; return arr[Math.round(deg/45)%8]; }
 
+        // 風向判斷
+        function getWindDir(deg) { 
+            const arr = ["北","東北","東","東南","南","西南","西","西北"]; 
+            return arr[Math.round(deg/45)%8]; 
+        }
+        
+        // 抓取所有天氣資訊
         async function fetchAllWeather() {
             const container = document.getElementById('weather-content');
-            container.innerHTML = `<div class="p-8 opacity-40 text-sm italic animate-pulse text-center">正在同步大氣數據...</div>`;
+            container.innerHTML = `<div class="p-8 opacity-40 text-sm italic animate-pulse text-center">連線中...</div>`;
             
             navigator.geolocation.getCurrentPosition(async p => {
                 const { latitude: lat, longitude: lon } = p.coords;
-                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${WEATHER_API_KEY}&lat=${lat}&lon=${lon}&lang=zh_tw`);
-                const d = await res.json();
-                
-                lastWeather = d;
-                lastCity = cityNames[d.name] || d.name;
-                
-                let html = generateWeatherCard(lastCity, d, "目前位置", true);
-                
-                const jpCities = [{q:'Tokyo', n:'東京'}, {q:'Osaka', n:'大阪'}];
-                for(let city of jpCities) {
-                    try {
-                        const rc = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city.q}&units=metric&appid=${WEATHER_API_KEY}&lang=zh_tw`);
-                        const dc = await rc.json();
-                        html += generateWeatherCard(city.n, dc, "日本城市", false);
-                    } catch(e) {}
+                try {
+                    // 抓取當前位置天氣
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${WEATHER_API_KEY}&lat=${lat}&lon=${lon}&lang=zh_tw`);
+                    const d = await res.json();
+                    
+                    let html = generateWeatherCard(cityNames[d.name] || d.name, d, "當前位置", true);
+                    
+                    // 抓取日本預設城市天氣
+                    const jpCities = [{q:'Tokyo', n:'東京'}, {q:'Osaka', n:'大阪'}, {q:'Kyoto', n:'京都'}];
+                    for(let city of jpCities) {
+                        try {
+                            const rc = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city.q}&units=metric&appid=${WEATHER_API_KEY}&lang=zh_tw`);
+                            const dc = await rc.json();
+                            html += generateWeatherCard(city.n, dc, "日本熱門城市", false);
+                        } catch(e) {}
+                    }
+                    container.innerHTML = html;
+                } catch(e) {
+                    container.innerHTML = `<div class="p-8 text-center opacity-50">連線錯誤，請檢查網路</div>`;
                 }
-                container.innerHTML = html;
-                updateLockScreen(d);
-                
-                // 自動生成 AI 建議
-                generateAiPlan();
             }, () => {
-                container.innerHTML = `<div class="p-8 text-center opacity-50">請開啟定位權限</div>`;
+                container.innerHTML = `<div class="p-8 text-center opacity-50">無法獲取定位授權</div>`;
             });
         }
 
-        function updateLockScreen(d) {
-            document.getElementById('lock-city').innerText = lastCity;
-            document.getElementById('lock-w-desc').innerText = `${d.weather[0].description} ${Math.round(d.main.temp)}°C`;
-            document.getElementById('lock-w-icon-box').innerHTML = getWeatherIcon(d.weather[0].icon);
-        }
-
+        // 生成天氣卡片 HTML
         function generateWeatherCard(title, d, label, isMain = false) {
             const windKmH = (d.wind.speed * 3.6).toFixed(1);
-            return `<div class="card-frosted p-6 ${isMain ? 'border-l-4 border-sky-500 ai-glow' : ''}">
+            return `<div class="card-frosted p-6 ${isMain ? 'border-l-4 border-sky-500' : ''}">
                 <div class="flex justify-between items-start">
-                    <div>
-                        <span class="text-[10px] font-black bg-white/10 px-2.5 py-1 rounded uppercase tracking-wider">${label}</span>
-                        <p class="text-xl font-black mt-2">${title}</p>
-                    </div>
+                    <div><span class="text-[10px] font-black bg-white/10 px-2.5 py-1 rounded tracking-wider">${label}</span><p class="text-xl font-black mt-2">${title}</p></div>
                     <div class="text-4xl">${getWeatherIcon(d.weather[0].icon)}</div>
                 </div>
                 <div class="flex items-end gap-3 mt-4">
                     <span class="text-6xl font-black">${Math.round(d.main.temp)}°</span>
-                    <div class="flex flex-col mb-1.5">
-                        <span class="text-sm font-bold opacity-50">${d.weather[0].description}</span>
-                        <span class="text-[11px] font-bold text-sky-400">體感 ${Math.round(d.main.feels_like)}°</span>
-                    </div>
+                    <div class="flex flex-col mb-1.5"><span class="text-sm font-bold opacity-50">${d.weather[0].description}</span><span class="text-[11px] font-bold text-sky-400">體感 ${Math.round(d.main.feels_like)}°</span></div>
                 </div>
                 <div class="grid grid-cols-3 gap-2 mt-8 pt-6 border-t border-white/5">
-                    <div class="text-center">
-                        <p class="text-[10px] opacity-30">風速</p>
-                        <p class="text-xs font-bold">${getWindDir(d.wind.deg)} ${windKmH}</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[10px] opacity-30">濕度</p>
-                        <p class="text-xs font-bold">${d.main.humidity}%</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[10px] opacity-30">降雨</p>
-                        <p class="text-xs font-bold text-sky-400">${d.clouds.all}%</p>
-                    </div>
+                    <div class="text-center"><p class="text-[10px] opacity-30 mb-1">風向風速</p><p class="text-xs font-bold">${getWindDir(d.wind.deg)} ${windKmH}k/h</p></div>
+                    <div class="text-center border-x border-white/5"><p class="text-[10px] opacity-30 mb-1">環境濕度</p><p class="text-xs font-bold">${d.main.humidity}%</p></div>
+                    <div class="text-center"><p class="text-[10px] opacity-30 mb-1">雲量</p><p class="text-xs font-bold text-sky-400">${d.clouds.all}%</p></div>
                 </div>
             </div>`;
         }
 
+        // 天氣圖示對應
         function getWeatherIcon(code) {
             const isNight = code.endsWith('n'), c = code.substring(0, 2);
             switch(c) {
                 case '01': return isNight ? '🌙' : '☀️';
                 case '02': return '⛅';
+                case '03': case '04': return '☁️';
                 case '09': case '10': return '🌧️';
-                default: return '☁️';
+                case '11': return '⛈️';
+                case '13': return '❄️';
+                default: return '🌫️';
             }
         }
 
+        // 頁面切換
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.add('opacity-30');
-                b.classList.remove('active');
+            document.querySelectorAll('.nav-btn').forEach(b => { 
+                b.classList.add('opacity-30'); 
+                b.classList.remove('active'); 
             });
             document.getElementById(id).classList.add('active');
             const btnId = id === 'home-page' ? 'tab-home' : 'tab-weather';
             document.getElementById(btnId).classList.remove('opacity-30');
             document.getElementById(btnId).classList.add('active');
+            if(id === 'weather-page') fetchAllWeather();
         }
 
+        // 主題切換
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
-        function toggleLockScreen() { document.getElementById('lock-screen').classList.toggle('active'); updateTime(); }
-        
-        function updateTime() {
-            const n = new Date();
-            document.getElementById('lock-time').innerText = n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
-            const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-            document.getElementById('lock-date').innerText = `${n.getMonth()+1}月${n.getDate()}日 ${days[n.getDay()]}`;
-        }
 
+        // 抓取匯率
         async function updateRate() {
             try {
                 const r = await fetch('https://open.er-api.com/v6/latest/TWD'); 
                 const d = await r.json();
                 currentRate = d.rates.JPY; 
-                document.getElementById('rate-info').innerText = `市場匯率：1 TWD ≈ ${currentRate.toFixed(4)} JPY`;
+                document.getElementById('rate-info').innerText = `1 TWD ≈ ${currentRate.toFixed(4)} JPY (市場參考價)`;
             } catch(e) {}
         }
 
+        // 匯率輸入邏輯
         const twdIn = document.getElementById('twd-input');
         const jpyIn = document.getElementById('jpy-input');
         twdIn.oninput = () => { if (twdIn.value === "") jpyIn.value = ""; else jpyIn.value = Math.round(twdIn.value * currentRate); };
         jpyIn.oninput = () => { if (jpyIn.value === "") twdIn.value = ""; else twdIn.value = Math.round(jpyIn.value / currentRate); };
 
-        setInterval(updateTime, 1000); 
-        updateRate(); updateTime(); fetchAllWeather();
+        // 背景圖片上傳
+        document.getElementById('bg-upload').onchange = e => {
+            const reader = new FileReader(); 
+            reader.onload = () => { document.getElementById('main-bg').style.backgroundImage = `url(${reader.result})`; };
+            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+        };
+
+        // 初始化
+        updateRate(); 
+        fetchAllWeather();
     </script>
 </body>
 </html>
