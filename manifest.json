@@ -1,15 +1,17 @@
 {
   "short_name": "日本助手",
-  "name": "Japan Travel Tool App",
+  "name": "日本自助旅行助手 Pro",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/197/197604.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/826/826070.png",
+      "type": "image/png",
       "sizes": "512x512",
-      "type": "image/png"
+      "purpose": "any maskable"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": "index.html",
+  "background_color": "#000000",
   "display": "standalone",
-  "theme_color": "#dc2626",
-  "background_color": "#f8fafc"
+  "scope": "./",
+  "theme_color": "#000000"
 }
