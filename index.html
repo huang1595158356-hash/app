@@ -7,68 +7,144 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .page { display: none; }
-        .page.active { display: block; }
-        /* 優化手機點擊效果 */
-        button, a { -webkit-tap-highlight-color: transparent; }
-        body { -webkit-user-select: none; }
+        /* 確保頁面切換正常 */
+        .page { display: none !important; }
+        .page.active { display: block !important; }
+        button, a { -webkit-tap-highlight-color: transparent; cursor: pointer; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900">
+<body class="bg-slate-50 font-sans">
 
-    <div id="home" class="page active">
-        <header class="bg-red-600 text-white p-6 text-center shadow-lg sticky top-0 z-10">
+    <div id="home-page" class="page active">
+        <header class="bg-red-600 text-white p-6 text-center shadow-lg">
             <h1 class="text-2xl font-black italic tracking-tighter">JAPAN TRAVEL GO</h1>
         </header>
 
         <main class="p-6 space-y-6">
             <section class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
-                <p class="text-xs font-bold text-slate-400 mb-4 tracking-widest text-center italic">EXCHANGE RATE (JPY ⮕ TWD)</p>
-                <div class="flex items-center space-x-3 mb-4">
-                    <span class="text-3xl font-bold text-slate-300">¥</span>
-                    <input type="number" id="jpy" class="w-full text-4xl font-bold outline-none border-b-2 border-slate-100 focus:border-red-500 transition-colors" placeholder="0" inputmode="decimal">
-                </div>
-                <div class="flex flex-col items-center justify-center pt-2">
-                    <span class="text-sm text-slate-400 mb-1">約等於</span>
+                <p class="text-xs font-bold text-slate-400 mb-4 text-center italic">JPY ⮕ TWD</p>
+                <input type="number" id="jpy" class="w-full text-4xl font-bold outline-none border-b-2 border-slate-100 focus:border-red-500 text-center" placeholder="輸入日幣" inputmode="decimal">
+                <div class="mt-4 text-center">
                     <div class="text-5xl font-black text-red-600">NT$ <span id="twd">0</span></div>
-                    <p id="rate-info" class="text-[10px] text-slate-300 mt-3 italic">載入最新匯率中...</p>
                 </div>
             </section>
 
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="showWeather()" class="bg-sky-500 text-white rounded-3xl p-8 shadow-lg flex flex-col items-center active:scale-95 transition-transform">
+                <button id="btn-weather" class="bg-sky-500 text-white rounded-3xl p-8 shadow-lg flex flex-col items-center active:opacity-70 transition-all">
                     <i class="fa-solid fa-cloud-sun text-4xl mb-3"></i>
-                    <span class="font-bold tracking-wide">即時天氣</span>
+                    <span class="font-bold">即時天氣</span>
                 </button>
-                
-                <a href="https://www.jorudan.co.jp/" target="_blank" class="bg-white text-slate-700 rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col items-center active:scale-95 transition-transform">
+                <a href="https://www.jorudan.co.jp/" target="_blank" class="bg-white text-slate-700 rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col items-center">
                     <i class="fa-solid fa-train-subway text-orange-500 text-4xl mb-3"></i>
-                    <span class="font-bold tracking-wide">交通查詢</span>
-                </a>
-                
-                <a href="https://www.google.com/maps" target="_blank" class="bg-white text-slate-700 rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col items-center active:scale-95 transition-transform">
-                    <i class="fa-solid fa-map-location-dot text-blue-500 text-4xl mb-3"></i>
-                    <span class="font-bold tracking-wide">Google Map</span>
-                </a>
-
-                <a href="https://translate.google.com/?sl=zh-TW&tl=ja" target="_blank" class="bg-white text-slate-700 rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col items-center active:scale-95 transition-transform">
-                    <i class="fa-solid fa-language text-green-500 text-4xl mb-3"></i>
-                    <span class="font-bold tracking-wide">即時翻譯</span>
+                    <span class="font-bold">交通查詢</span>
                 </a>
             </div>
         </main>
     </div>
 
-    <div id="weather" class="page min-h-screen bg-sky-600 text-white">
-        <header class="p-6 flex items-center bg-sky-700/40 sticky top-0 z-10 backdrop-blur-md">
-            <button onclick="showHome()" class="text-2xl mr-4 active:opacity-50 transition-opacity"><i class="fa-solid fa-chevron-left"></i></button>
-            <h2 class="text-xl font-bold italic tracking-wider">WEATHER CENTER</h2>
+    <div id="weather-page" class="page bg-sky-600 min-h-screen text-white">
+        <header class="p-6 flex items-center bg-sky-700/40">
+            <button id="btn-back" class="text-2xl mr-4 px-2"><i class="fa-solid fa-chevron-left"></i></button>
+            <h2 class="text-xl font-bold italic">WEATHER CENTER</h2>
         </header>
 
         <div class="p-6 space-y-4">
-            <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-xl">
+            <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20">
                 <div class="flex justify-between items-center mb-6">
-                    <span class="text-xs font-bold tracking-widest"><i class="fa-solid fa-location-crosshairs mr-2"></i>CURRENT LOCATION</span>
-                    <button onclick="getGPS()" class="bg-white text-sky-600 text-xs font-bold px-5 py-2 rounded-full shadow-lg active:scale-90 transition-transform">更新定位</button>
+                    <span class="text-xs font-bold"><i class="fa-solid fa-location-crosshairs mr-2"></i>LOCATION</span>
+                    <button onclick="getGPS()" class="bg-white text-sky-600 text-xs font-bold px-4 py-1 rounded-full">更新定位</button>
                 </div>
                 <div class="text-center py-4">
+                    <p id="g-temp" class="text-7xl font-black mb-2">--°</p>
+                    <p id="g-city" class="text-xl font-medium italic opacity-90">尚未獲取位置</p>
+                    <div id="g-info" class="mt-4 text-xs opacity-70"></div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-white/10 rounded-2xl p-5 flex justify-between items-center">
+                    <div><p class="font-bold text-lg">東京 Tokyo</p><p id="i-Tokyo" class="text-[10px] opacity-70 italic">載入中...</p></div>
+                    <div class="text-right"><p id="t-Tokyo" class="text-3xl font-black">--°</p><p id="d-Tokyo" class="text-xs font-bold">--</p></div>
+                </div>
+                <div class="bg-white/10 rounded-2xl p-5 flex justify-between items-center">
+                    <div><p class="font-bold text-lg">大阪 Osaka</p><p id="i-Osaka" class="text-[10px] opacity-70 italic">載入中...</p></div>
+                    <div class="text-right"><p id="t-Osaka" class="text-3xl font-black">--°</p><p id="d-Osaka" class="text-xs font-bold">--</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
+        let currentRate = 0.211;
+
+        // 頁面切換控制 (改用事件監聽確保穩定)
+        document.getElementById('btn-weather').addEventListener('click', () => {
+            document.getElementById('home-page').classList.remove('active');
+            document.getElementById('weather-page').classList.add('active');
+            updateCities();
+        });
+
+        document.getElementById('btn-back').addEventListener('click', () => {
+            document.getElementById('weather-page').classList.remove('active');
+            document.getElementById('home-page').classList.add('active');
+        });
+
+        // 匯率系統
+        fetch('https://open.er-api.com/v6/latest/JPY').then(r=>r.json()).then(d=>{
+            currentRate = d.rates.TWD;
+        }).catch(e=>console.log("匯率更新失敗"));
+
+        document.getElementById('jpy').addEventListener('input', (e)=>{
+            document.getElementById('twd').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0';
+        });
+
+        // 天氣 API
+        async function fetchWeatherDetail(city, tId, dId, iId, lat, lon) {
+            let url = `https://api.openweathermap.org/data/2.5/weather?q=${city},JP&units=metric&appid=${API_KEY}&lang=zh_tw`;
+            if(lat && lon) url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}&lang=zh_tw`;
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.cod !== 200) { throw new Error(data.message); }
+                
+                document.getElementById(tId).innerText = Math.round(data.main.temp) + '°';
+                document.getElementById(dId).innerText = data.weather[0].description;
+                
+                const windDirs = ['北','東北','東','東南','南','西南','西','西北'];
+                const windStr = windDirs[Math.round(data.wind.deg/45)%8];
+                
+                const uvRes = await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${data.coord.lat}&lon=${data.coord.lon}&appid=${API_KEY}`);
+                const uvData = await uvRes.json();
+                
+                const infoStr = `風向: ${windStr}風 | 紫外線: ${uvData.value}`;
+                
+                if(lat) {
+                    document.getElementById('g-city').innerText = data.name;
+                    document.getElementById('g-info').innerText = infoStr;
+                } else {
+                    document.getElementById(iId).innerText = infoStr;
+                }
+            } catch(e) {
+                console.error("天氣載入出錯:", e);
+                if(iId) document.getElementById(iId).innerText = "API 尚未生效，請稍候再試";
+            }
+        }
+
+        function updateCities() {
+            fetchWeatherDetail('Tokyo', 't-Tokyo', 'd-Tokyo', 'i-Tokyo');
+            fetchWeatherDetail('Osaka', 't-Osaka', 'd-Osaka', 'i-Osaka');
+        }
+
+        function getGPS() {
+            document.getElementById('g-city').innerText = "正在取得定位...";
+            navigator.geolocation.getCurrentPosition(pos => {
+                fetchWeatherDetail('', 'g-temp', '', '', pos.coords.latitude, pos.coords.longitude);
+            }, () => {
+                document.getElementById('g-city').innerText = "定位失敗，請開啟 GPS";
+            });
+        }
+    </script>
+</body>
+</html>
