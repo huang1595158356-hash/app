@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JP Tech v3.6</title>
+    <title>JP Tech v3.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -152,7 +152,17 @@
     <script>
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
-        const cityMap = { 'Tokyo': '東京', 'Osaka': '大阪', 'Kyoto': '京都', 'Fukuoka': '福岡', 'Sapporo': '札幌' };
+
+        // 擴充繁中對照表，解決部分 API 英文問題
+        const geoTranslation = {
+            'Tokyo': '東京', 'Osaka': '大阪', 'Kyoto': '京都', 'Fukuoka': '福岡', 'Sapporo': '札幌',
+            'Chaozhou': '潮州', 'Pingtung': '屏東', 'Chaozhou Township': '潮州鎮', 'Taipei': '台北',
+            'New Taipei City': '新北', 'Kaohsiung': '高雄', 'Taichung': '台中', 'Tainan': '台南'
+        };
+
+        function translateName(name) {
+            return geoTranslation[name] || name;
+        }
 
         function applyBg(src) { 
             document.documentElement.style.setProperty('--bg-img', `url(${src})`);
@@ -193,8 +203,8 @@
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${p.coords.latitude}&lon=${p.coords.longitude}&lang=zh_tw`);
                 const d = await res.json();
                 
-                // 強制將 GPS 取得的地名應用到天氣卡片與鎖定畫面
-                let localName = d.name; 
+                // 套用翻譯邏輯
+                let localName = translateName(d.name); 
                 let html = generateWeatherCard(localName, d, true);
                 
                 const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
@@ -202,12 +212,12 @@
                     try {
                         const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
                         const dc = await resC.json();
-                        html += generateWeatherCard(cityMap[city], dc);
+                        html += generateWeatherCard(translateName(city), dc);
                     } catch(e){}
                 }
                 container.innerHTML = html;
                 updateLockWeather(localName, d); 
-            }, () => { container.innerHTML = "請開啟 GPS 權限以獲取天氣"; });
+            }, () => { container.innerHTML = "請開啟 GPS 權限或確認瀏覽器設定"; });
         }
 
         function generateWeatherCard(title, d, isMain = false) {
