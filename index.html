@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>日本助手 - 核心版</title>
+    <title>日本助手 - 專業版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -26,6 +26,10 @@
         #lock-time { font-size: 6.5rem; font-weight: 800; letter-spacing: -3px; line-height: 1; text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .lock-screen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: rgba(0,0,0,0.1); display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 100px; }
         .lock-screen-overlay.active { display: flex; animation: lockFadeIn 0.3s ease-out; }
+        
+        /* 確保天氣圖示不被色彩過濾影響 */
+        .weather-icon { filter: none !important; }
+
         @keyframes lockFadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
@@ -36,7 +40,7 @@
         <p id="lock-time" class="text-white">00:00</p>
         <p id="lock-date" class="text-2xl font-bold mt-2 text-white">日期讀取中</p>
         <div class="mt-12 bg-black/30 p-6 rounded-[40px] border border-white/10 flex items-center gap-5 backdrop-blur-md">
-            <img id="lock-w-icon" src="" class="w-20 h-20">
+            <img id="lock-w-icon" src="" class="w-20 h-20 weather-icon">
             <div class="text-white">
                 <p id="lock-w-temp" class="text-5xl font-black">--°</p>
                 <p id="lock-w-desc" class="font-bold text-lg">讀取中</p>
@@ -48,11 +52,12 @@
         <div id="home-page" class="page active">
             <header class="p-8 pt-12 flex justify-between items-center">
                 <h1 class="text-3xl font-black italic tracking-tighter" style="color: var(--text-color);">JAPAN GO</h1>
-                <div class="flex items-center space-x-3">
-                    <button onclick="toggleLockScreen()" class="text-[11px] bg-white text-black font-black px-4 py-2 rounded-full">預覽</button>
-                    <label class="text-[11px] font-black bg-white/10 px-4 py-2 rounded-full border border-white/10" style="color: var(--text-color);">
-                        更換圖片 <input type="file" id="bg-upload" accept="image/*" class="hidden">
+                <div class="flex items-center space-x-2">
+                    <button onclick="resetBg()" class="text-[11px] font-black bg-red-500/20 text-red-500 px-3 py-2 rounded-full border border-red-500/20">重製</button>
+                    <label class="text-[11px] font-black bg-white/10 px-3 py-2 rounded-full border border-white/10" style="color: var(--text-color);">
+                        更換 <input type="file" id="bg-upload" accept="image/*" class="hidden">
                     </label>
+                    <button onclick="toggleLockScreen()" class="text-[11px] bg-white text-black font-black px-4 py-2 rounded-full">預覽</button>
                 </div>
             </header>
             <main class="p-6 space-y-6">
@@ -86,8 +91,8 @@
                 <button onclick="fetchAllWeather()" class="text-[11px] bg-white text-black font-black px-5 py-2 rounded-full">刷新</button>
             </header>
             
-            <div class="px-6 space-y-4">
-                <div class="card-frosted p-8 mb-6">
+            <div class="px-6 space-y-4 pb-10">
+                <div class="card-frosted p-8 mb-4 border-l-4 border-sky-400">
                     <p class="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] mb-1">當前定位</p>
                     <div class="flex justify-between items-center">
                         <div>
@@ -96,43 +101,33 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span id="g-temp" class="text-5xl font-black">--°</span>
-                            <img id="g-icon" src="" class="w-16">
+                            <img id="g-icon" src="" class="w-16 weather-icon">
                         </div>
                     </div>
                 </div>
 
-                <p class="text-[11px] font-black tracking-[0.3em] opacity-40 uppercase px-2">日本主要城市</p>
+                <p class="text-[11px] font-black tracking-[0.3em] opacity-40 uppercase px-2">日本五大城市</p>
                 
-                <div class="card-frosted p-6 flex justify-between items-center">
-                    <div class="flex items-center gap-4">
-                        <i class="fa-solid fa-landmark-dome text-red-400 text-xl"></i>
-                        <span class="font-black text-xl">東京</span>
+                <div id="city-list" class="space-y-3">
+                    <div class="card-frosted p-5 flex justify-between items-center">
+                        <div class="flex items-center gap-4"><i class="fa-solid fa-landmark-dome text-red-400"></i><span class="font-bold">東京</span></div>
+                        <div class="flex items-center gap-3"><span id="temp-tokyo" class="font-black text-2xl">--°</span><img id="icon-tokyo" src="" class="w-10 weather-icon"></div>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <span id="temp-tokyo" class="font-black text-3xl">--°</span>
-                        <img id="icon-tokyo" src="" class="w-12">
+                    <div class="card-frosted p-5 flex justify-between items-center">
+                        <div class="flex items-center gap-4"><i class="fa-solid fa-castle text-blue-400"></i><span class="font-bold">大阪</span></div>
+                        <div class="flex items-center gap-3"><span id="temp-osaka" class="font-black text-2xl">--°</span><img id="icon-osaka" src="" class="w-10 weather-icon"></div>
                     </div>
-                </div>
-
-                <div class="card-frosted p-6 flex justify-between items-center">
-                    <div class="flex items-center gap-4">
-                        <i class="fa-solid fa-castle text-blue-400 text-xl"></i>
-                        <span class="font-black text-xl">大阪</span>
+                    <div class="card-frosted p-5 flex justify-between items-center">
+                        <div class="flex items-center gap-4"><i class="fa-solid fa-torii-gate text-orange-400"></i><span class="font-bold">京都</span></div>
+                        <div class="flex items-center gap-3"><span id="temp-kyoto" class="font-black text-2xl">--°</span><img id="icon-kyoto" src="" class="w-10 weather-icon"></div>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <span id="temp-osaka" class="font-black text-3xl">--°</span>
-                        <img id="icon-osaka" src="" class="w-12">
+                    <div class="card-frosted p-5 flex justify-between items-center">
+                        <div class="flex items-center gap-4"><i class="fa-solid fa-shinto-shrine text-green-400"></i><span class="font-bold">福岡</span></div>
+                        <div class="flex items-center gap-3"><span id="temp-fukuoka" class="font-black text-2xl">--°</span><img id="icon-fukuoka" src="" class="w-10 weather-icon"></div>
                     </div>
-                </div>
-
-                <div class="card-frosted p-6 flex justify-between items-center">
-                    <div class="flex items-center gap-4">
-                        <i class="fa-solid fa-torii-gate text-orange-400 text-xl"></i>
-                        <span class="font-black text-xl">京都</span>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span id="temp-kyoto" class="font-black text-3xl">--°</span>
-                        <img id="icon-kyoto" src="" class="w-12">
+                    <div class="card-frosted p-5 flex justify-between items-center">
+                        <div class="flex items-center gap-4"><i class="fa-solid fa-snowflake text-white"></i><span class="font-bold">札幌</span></div>
+                        <div class="flex items-center gap-3"><span id="temp-sapporo" class="font-black text-2xl">--°</span><img id="icon-sapporo" src="" class="w-10 weather-icon"></div>
                     </div>
                 </div>
             </div>
@@ -150,7 +145,7 @@
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
 
-        // 背景處理
+        // 背景與顏色邏輯
         function applyBg(src) {
             document.documentElement.style.setProperty('--bg-img', `url(${src})`);
             const img = new Image(); img.src = src;
@@ -159,8 +154,16 @@
                 ctx.drawImage(img, 0, 0, 1, 1); const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
                 const brightness = Math.sqrt(0.299*(r*r) + 0.587*(g*g) + 0.114*(b*b));
                 document.documentElement.style.setProperty('--text-color', brightness > 155 ? '#000' : '#fff');
-                document.documentElement.style.setProperty('--card-bg', brightness > 155 ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)');
+                document.documentElement.style.setProperty('--card-bg', brightness > 155 ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)');
             };
+        }
+
+        function resetBg() {
+            localStorage.removeItem('user_bg_img');
+            document.documentElement.style.setProperty('--bg-img', 'none');
+            document.documentElement.style.setProperty('--text-color', '#fff');
+            document.documentElement.style.setProperty('--card-bg', 'rgba(255,255,255,0.12)');
+            alert("桌布已重製為預設黑色");
         }
 
         const savedBg = localStorage.getItem('user_bg_img');
@@ -179,18 +182,15 @@
             if(id === 'weather-page') fetchAllWeather();
         }
 
-        // 匯率
         async function updateRate() {
             try { const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json(); currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `即時匯率: 1 TWD = ${currentRate.toFixed(2)} JPY`; } catch(e) {}
         }
         document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
 
-        // 抓取所有天氣
         function fetchAllWeather() {
             getGPS();
-            fetchCityWeather('Tokyo', 'tokyo');
-            fetchCityWeather('Osaka', 'osaka');
-            fetchCityWeather('Kyoto', 'kyoto');
+            const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
+            cities.forEach(city => fetchCityWeather(city, city.toLowerCase()));
         }
 
         async function fetchCityWeather(city, elementId) {
@@ -209,13 +209,11 @@
                 const d = await res.json();
                 const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`);
                 const geoData = await geoRes.json();
-                
                 const city = geoData[0]?.local_names?.['zh'] || geoData[0]?.name || "未知";
                 document.getElementById('g-city').innerText = city;
                 document.getElementById('g-temp').innerText = Math.round(d.main.temp) + '°';
                 document.getElementById('g-desc').innerText = d.weather[0].description;
                 document.getElementById('g-icon').src = `https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png`;
-                
                 document.getElementById('lock-w-icon').src = `https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png`;
                 document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°';
                 document.getElementById('lock-w-desc').innerText = d.weather[0].description;
@@ -236,7 +234,6 @@
             document.getElementById('lock-date').innerText = `${n.getMonth()+1}月${n.getDate()}日 ${days[n.getDay()]}`;
         }
         setInterval(updateTime, 1000);
-
         updateRate();
         showPage('home-page');
     </script>
