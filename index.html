@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>日本助手 - 專業版</title>
+    <title>JP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -27,8 +27,13 @@
         .lock-screen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: rgba(0,0,0,0.1); display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 100px; }
         .lock-screen-overlay.active { display: flex; animation: lockFadeIn 0.3s ease-out; }
         
-        /* 確保天氣圖示不被色彩過濾影響 */
-        .weather-icon { filter: none !important; }
+        /* 鎖定彩色圖示 */
+        .weather-icon { 
+            filter: none !important; 
+            -webkit-filter: none !important;
+            opacity: 1 !important;
+            display: block;
+        }
 
         @keyframes lockFadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
     </style>
@@ -51,13 +56,13 @@
     <div class="content-layer" id="ui-layer">
         <div id="home-page" class="page active">
             <header class="p-8 pt-12 flex justify-between items-center">
-                <h1 class="text-3xl font-black italic tracking-tighter" style="color: var(--text-color);">JAPAN GO</h1>
+                <h1 class="text-4xl font-black italic tracking-tighter" style="color: var(--text-color);">JP</h1>
                 <div class="flex items-center space-x-2">
-                    <button onclick="resetBg()" class="text-[11px] font-black bg-red-500/20 text-red-500 px-3 py-2 rounded-full border border-red-500/20">重製</button>
+                    <button onclick="resetBg()" class="text-[11px] font-black bg-red-600 text-white px-3 py-2 rounded-full shadow-lg">重製桌布</button>
                     <label class="text-[11px] font-black bg-white/10 px-3 py-2 rounded-full border border-white/10" style="color: var(--text-color);">
-                        更換 <input type="file" id="bg-upload" accept="image/*" class="hidden">
+                        更換圖片 <input type="file" id="bg-upload" accept="image/*" class="hidden">
                     </label>
-                    <button onclick="toggleLockScreen()" class="text-[11px] bg-white text-black font-black px-4 py-2 rounded-full">預覽</button>
+                    <button onclick="toggleLockScreen()" class="text-[11px] bg-white text-black font-black px-4 py-2 rounded-full shadow-lg">預覽</button>
                 </div>
             </header>
             <main class="p-6 space-y-6">
@@ -87,8 +92,8 @@
 
         <div id="weather-page" class="page">
             <header class="p-8 pt-12 flex justify-between items-center">
-                <h2 class="text-2xl font-black italic" style="color: var(--text-color);">旅遊氣象</h2>
-                <button onclick="fetchAllWeather()" class="text-[11px] bg-white text-black font-black px-5 py-2 rounded-full">刷新</button>
+                <h2 class="text-2xl font-black italic" style="color: var(--text-color);">JP WEATHER</h2>
+                <button onclick="fetchAllWeather()" class="text-[11px] bg-white text-black font-black px-5 py-2 rounded-full">刷新數據</button>
             </header>
             
             <div class="px-6 space-y-4 pb-10">
@@ -145,7 +150,6 @@
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
 
-        // 背景與顏色邏輯
         function applyBg(src) {
             document.documentElement.style.setProperty('--bg-img', `url(${src})`);
             const img = new Image(); img.src = src;
@@ -163,7 +167,7 @@
             document.documentElement.style.setProperty('--bg-img', 'none');
             document.documentElement.style.setProperty('--text-color', '#fff');
             document.documentElement.style.setProperty('--card-bg', 'rgba(255,255,255,0.12)');
-            alert("桌布已重製為預設黑色");
+            alert("桌布已清除");
         }
 
         const savedBg = localStorage.getItem('user_bg_img');
@@ -187,6 +191,10 @@
         }
         document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
 
+        function getIconUrl(code) {
+            return `https://openweathermap.org/img/wn/${code}@2x.png`;
+        }
+
         function fetchAllWeather() {
             getGPS();
             const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
@@ -198,7 +206,7 @@
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
                 const d = await res.json();
                 document.getElementById(`temp-${elementId}`).innerText = Math.round(d.main.temp) + '°';
-                document.getElementById(`icon-${elementId}`).src = `https://openweathermap.org/img/wn/${d.weather[0].icon}.png`;
+                document.getElementById(`icon-${elementId}`).src = getIconUrl(d.weather[0].icon);
             } catch(e) {}
         }
 
@@ -210,11 +218,13 @@
                 const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`);
                 const geoData = await geoRes.json();
                 const city = geoData[0]?.local_names?.['zh'] || geoData[0]?.name || "未知";
+                
                 document.getElementById('g-city').innerText = city;
                 document.getElementById('g-temp').innerText = Math.round(d.main.temp) + '°';
                 document.getElementById('g-desc').innerText = d.weather[0].description;
-                document.getElementById('g-icon').src = `https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png`;
-                document.getElementById('lock-w-icon').src = `https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png`;
+                const url = getIconUrl(d.weather[0].icon);
+                document.getElementById('g-icon').src = url;
+                document.getElementById('lock-w-icon').src = url;
                 document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°';
                 document.getElementById('lock-w-desc').innerText = d.weather[0].description;
             });
