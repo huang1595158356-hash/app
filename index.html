@@ -33,7 +33,7 @@
         .lock-screen-overlay.active { display: flex; animation: lockFadeIn 0.3s ease-out; }
         @keyframes lockFadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
         .ai-glow { animation: glow 2s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 0 5px rgba(168, 85, 247, 0.2); } to { box-shadow: 0 0 20px rgba(168, 85, 247, 0.6); } }
+        @keyframes glow { from { box-shadow: 0 0 5px rgba(168, 85, 247, 0.1); } to { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); } }
     </style>
 </head>
 <body>
@@ -95,7 +95,7 @@
             
             <div class="px-6 space-y-6">
                 <div class="card-frosted p-10 text-center">
-                    <p class="text-[10px] font-black opacity-50 uppercase tracking-[0.3em] mb-2" style="color: var(--text-color);">當前定位</p>
+                    <p class="text-[10px] font-black opacity-50 uppercase tracking-[0.3em] mb-2" style="color: var(--text-color);">當前行政區</p>
                     <p id="g-city" class="text-3xl font-black mb-6" style="color: var(--text-color);">讀取中...</p>
                     <div class="flex justify-between items-center px-4">
                         <p id="g-temp" class="text-8xl font-black tracking-tighter" style="color: var(--text-color);">--°</p>
@@ -112,15 +112,14 @@
                         </div>
                         <button onclick="getAIAdvice()" id="ai-btn" class="text-[10px] font-bold bg-purple-500 text-white px-3 py-1 rounded-full">獲取建議</button>
                     </div>
-                    <p id="ai-content" class="text-sm font-bold leading-relaxed opacity-80">點擊按鈕，讓 AI 分析當前天氣並給予穿衣與旅遊建議。</p>
+                    <p id="ai-content" class="text-sm font-bold leading-relaxed opacity-80">點擊按鈕，由 AI 結合當地氣候提供專屬建議。</p>
                 </div>
                 
                 <div class="flex justify-between items-center px-2">
                     <p class="text-[11px] font-black tracking-[0.3em] opacity-40 uppercase" style="color: var(--text-color);">自訂追蹤地區</p>
                     <button onclick="saveCustomPlaces()" class="text-[10px] font-bold text-blue-400">儲存</button>
                 </div>
-                <div class="space-y-4" id="custom-container">
-                    </div>
+                <div class="space-y-4" id="custom-container"></div>
             </div>
         </div>
     </div>
@@ -133,11 +132,12 @@
     </footer>
 
     <script>
+        // 核心密鑰
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
-        const GEMINI_KEY = 'YOUR_GEMINI_API_KEY'; // 請在此處填入你的 Gemini API Key
+        const GEMINI_KEY = 'AIzaSyBnHW5wEMzo9OcvJTMQ8ZN4a9MRQJqkPKY'; 
         let currentRate = 4.75;
 
-        // --- 1. 背景與 UI 邏輯 ---
+        // --- UI & 背景 ---
         function applyBg(src) {
             document.documentElement.style.setProperty('--bg-img', `url(${src})`);
             const img = new Image(); img.src = src;
@@ -166,18 +166,17 @@
             if(id === 'weather-page') { initWeather(); }
         }
 
-        // --- 2. 匯率邏輯 ---
+        // --- 匯率 ---
         async function updateRate() {
             try { const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json(); currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `即時匯率: 1 TWD = ${currentRate.toFixed(2)} JPY`; } catch(e) {}
         }
         document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
 
-        // --- 3. 天氣核心邏輯 (含 10 分鐘快取) ---
+        // --- 天氣 (10分鐘快取) ---
         async function initWeather() {
             const cache = JSON.parse(localStorage.getItem('weather_main_cache'));
             const now = Date.now();
-
-            if (cache && (now - cache.time < 600000)) { // 10 分鐘 (600,000 毫秒)
+            if (cache && (now - cache.time < 600000)) { 
                 renderWeather(cache.data, cache.city);
                 loadCustomPlaces();
             } else {
@@ -194,17 +193,13 @@
                     const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`);
                     const geoData = await geoRes.json();
                     const city = geoData[0]?.local_names?.['zh'] || geoData[0]?.name || "未知區域";
-                    
                     const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lang=zh_tw&lat=${lat}&lon=${lon}`);
                     const data = await res.json();
-                    
-                    if(res.status === 429) { alert("API 額度已達上限，請一小時後再試"); return; }
-                    
                     const cacheObj = { time: Date.now(), data: data, city: city };
                     localStorage.setItem('weather_main_cache', JSON.stringify(cacheObj));
                     renderWeather(data, city);
                 },
-                e => { alert("請開啟定位權限以獲取精準天氣"); },
+                e => { alert("請開啟定位權限"); },
                 { enableHighAccuracy: true }
             );
         }
@@ -215,14 +210,12 @@
             document.getElementById('g-temp').innerText = Math.round(d.main.temp) + '°';
             document.getElementById('g-icon').src = icon;
             document.getElementById('g-desc').innerText = d.weather[0].description;
-            
-            // 同步鎖屏
             document.getElementById('lock-w-icon').src = icon;
             document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°';
             document.getElementById('lock-w-desc').innerText = d.weather[0].description;
         }
 
-        // --- 4. AI 助手邏輯 ---
+        // --- AI 助手實作 ---
         async function getAIAdvice() {
             const content = document.getElementById('ai-content');
             const btn = document.getElementById('ai-btn');
@@ -230,15 +223,10 @@
             const temp = document.getElementById('g-temp').innerText;
             const desc = document.getElementById('g-desc').innerText;
 
-            if (GEMINI_KEY === 'YOUR_GEMINI_API_KEY') {
-                content.innerText = "請在代碼中填入你的 Gemini API Key 才能開啟 AI 功能。";
-                return;
-            }
-
-            btn.innerText = "思考中...";
+            btn.innerText = "分析中...";
             btn.disabled = true;
 
-            const prompt = `你是日本自助助手。目前在${city}，天氣${desc}，氣溫${temp}。請用40字以內的繁體中文，針對穿著建議和旅遊提醒給出一個具備幽默感且精闢的回答。`;
+            const prompt = `你是專業旅遊助手。地點:${city}，天氣:${desc}，氣溫:${temp}。請用50字以內繁體中文，給出今日穿衣指南與一條生活/旅遊冷知識建議。`;
 
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
@@ -249,14 +237,14 @@
                 const d = await res.json();
                 content.innerText = d.candidates[0].content.parts[0].text;
             } catch (e) {
-                content.innerText = "AI 暫時離線，可能是額度爆了或是 Key 有誤。";
+                content.innerText = "AI 正在日本度假，請稍後再試。";
             } finally {
                 btn.innerText = "獲取建議";
                 btn.disabled = false;
             }
         }
 
-        // --- 5. 自訂地區邏輯 ---
+        // --- 自訂地區 ---
         const customContainer = document.getElementById('custom-container');
         function saveCustomPlaces() {
             const inputs = document.querySelectorAll('.custom-input');
@@ -265,13 +253,13 @@
             loadCustomPlaces(true);
         }
 
-        async function loadCustomPlaces(forceRefresh = false) {
+        async function loadCustomPlaces() {
             const saved = JSON.parse(localStorage.getItem('custom_places_v2') || '["", "", ""]');
             customContainer.innerHTML = '';
             saved.forEach(async (name, i) => {
                 const html = `
                     <div class="card-frosted p-4 flex flex-col space-y-3">
-                        <input type="text" value="${name}" placeholder="地區 ${i+1}" class="custom-input bg-white/5 p-3 rounded-xl border border-white/10 outline-none font-bold text-sm">
+                        <input type="text" value="${name}" placeholder="輸入地區 ${i+1}" class="custom-input bg-white/5 p-3 rounded-xl border border-white/10 outline-none font-bold text-sm">
                         <div id="res-${i}" class="flex justify-between items-center px-2 ${name ? '' : 'hidden'}">
                             <span class="font-black text-lg">${name}</span>
                             <div class="flex items-center gap-3">
@@ -296,7 +284,6 @@
             } catch(e) {}
         }
 
-        // --- 6. 時間與鎖屏 ---
         function toggleLockScreen() {
             const ls = document.getElementById('lock-screen');
             const isActive = ls.classList.toggle('active');
