@@ -3,75 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>日本自助助手 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* 全域設定 (智慧顏色系統核心) */
         :root { 
-            /* 預設一張清晰的日本直立街景圖 */
-            --bg-img: url('https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?q=80&w=1000'); 
-            /* 智慧顏色變數 (JS 會控制這裡) */
-            --text-color: #ffffff; /* 預設白字 */
-            --card-bg: rgba(255, 255, 255, 0.1); /* 預設半透明白 */
-            --card-border: rgba(255, 255, 255, 0.15);
+            --bg-img: none; /* 預設無圖片 */
+            --text-color: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.1);
             --sub-text: rgba(255, 255, 255, 0.6);
-            --tab-bg: rgba(0, 0, 0, 0.7); /* 預設半透明黑底部 */
-            --shadow-color: rgba(0, 0, 0, 0.3);
+            --tab-bg: rgba(0, 0, 0, 0.85);
         }
         
         body, html { height: 100%; margin: 0; overflow: hidden; background: #000; max-width: 500px; margin: 0 auto; color: var(--text-color); }
         
-        /* 1. 底層清晰背景圖 (手機直立優化) */
+        /* 1. 背景層 - 預設黑色 */
         .bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: var(--bg-img); background-size: cover; background-position: center center; background-repeat: no-repeat;
+            background-color: #000;
+            background-image: var(--bg-img); 
+            background-size: cover; background-position: center center;
             z-index: 1; transition: background-image 0.5s ease;
         }
 
-        /* 2. 透明內容層 (UI 懸浮) */
+        /* 2. UI 層 */
         .content-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 2; overflow-y: auto; 
             padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
-            transition: opacity 0.3s ease;
         }
 
-        /* 內容樣式微調 (使用智慧顏色) */
         .page { display: none; opacity: 0; transition: opacity 0.4s ease; padding-bottom: 120px; }
         .page.active { display: block; opacity: 1; }
-        h1, h2, h3, p, span, div { color: var(--text-color); }
-        .text-sub { color: var(--sub-text) !important; }
 
-        /* 懸浮半透明卡片 (非毛玻璃) */
-        .card-floating { 
-            background: var(--card-bg); border: 1px solid var(--card-border);
-            box-shadow: 0 8px 32px 0 var(--shadow-color);
+        /* 超強毛玻璃卡片 - 提升模糊度至 40px 確保閱讀性 */
+        .card-frosted { 
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(40px) saturate(150%);
+            -webkit-backdrop-filter: blur(40px) saturate(150%);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 28px;
         }
 
-        /* 輸入框自訂 */
-        input[type="number"] { background: transparent; color: var(--text-color); text-align: center;}
+        input[type="number"] { background: transparent; color: var(--text-color); text-align: center; font-size: 3rem; font-weight: 900; }
         input[type="number"]::placeholder { color: var(--sub-text); }
         
-        /* 底部導覽列 (智慧顏色) */
-        .tab-bar-floating {
-            background: var(--tab-bg); border: 1px solid var(--card-border);
+        .tab-bar {
+            background: var(--tab-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* ================= 手機鎖屏模式 (全新新增) ================= */
+        /* 鎖屏模式 */
         .lock-screen-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 100; /* 最頂層 */
-            background: rgba(0, 0, 0, 0.2); /* 輕微暗化背景，突顯時間 */
-            display: none; /* 預設隱藏 */
-            flex-direction: column; justify-content: flex-start; align-items: center;
-            color: #fff; /* 鎖屏時間預設強白，不受背景影響 */
-            padding-top: calc( env(safe-area-inset-top) + 60px );
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            z-index: 100; background: rgba(0,0,0,0.1); display: none;
+            flex-direction: column; align-items: center; justify-content: flex-start;
+            padding-top: 80px; text-shadow: 0 2px 15px rgba(0,0,0,0.8);
         }
-        .lock-screen-overlay.active { display: flex; animation: fadeIn 0.4s ease; }
+        .lock-screen-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
     </style>
 </head>
 <body>
@@ -79,347 +74,50 @@
     <div class="bg-layer" id="main-bg"></div>
 
     <div id="lock-screen" class="lock-screen-overlay" onclick="toggleLockScreen()">
-        <p id="lock-time" class="text-8xl font-extralight tracking-tight">--:--</p>
-        <p id="lock-date" class="text-xl font-medium mt-2">--, --月--日</p>
-        <p id="lock-timezone" class="text-xs opacity-70 mt-1">時區: --</p>
+        <p id="lock-time" class="text-8xl font-thin tracking-tighter text-white">--:--</p>
+        <p id="lock-date" class="text-xl font-light mt-2 text-white">日期讀取中</p>
         
-        <div class="flex items-center space-x-3 mt-12 bg-black/20 px-6 py-3 rounded-full border border-white/10">
-            <img id="lock-w-icon" src="" alt="" class="w-16 h-16 weather-icon-lg">
-            <div class="text-left">
-                <p id="lock-w-temp" class="text-4xl font-bold">--°C</p>
-                <p id="lock-w-desc" class="text-sm opacity-90">定位中...</p>
+        <div class="mt-12 bg-black/30 px-8 py-4 rounded-3xl border border-white/10 flex items-center space-x-4">
+            <img id="lock-w-icon" src="" class="w-16 h-16">
+            <div class="text-white text-left">
+                <p id="lock-w-temp" class="text-4xl font-bold">--°</p>
+                <p id="lock-w-desc" class="text-sm opacity-80">定位中...</p>
             </div>
         </div>
-        <p class="absolute bottom-16 text-xs opacity-50">點擊任意處返回工具</p>
+        <p id="lock-tz" class="mt-4 text-[10px] text-white/50 uppercase tracking-widest"></p>
+        <p class="absolute bottom-20 text-[10px] text-white/40">點擊任意處返回</p>
     </div>
 
     <div class="content-layer" id="ui-layer">
-        
         <div id="home-page" class="page active">
-            <header class="p-6 pt-10 flex justify-between items-center sticky top-0 z-10">
-                <h1 class="text-3xl font-black italic tracking-tighter drop-shadow-lg">JAPAN GO</h1>
-                
-                <div class="flex items-center space-x-3">
-                    <button onclick="toggleLockScreen()" class="text-xs bg-white text-slate-900 font-bold px-4 py-1.5 rounded-full shadow-lg active:scale-90 transition-transform">
-                        <i class="fa-solid fa-expand mr-1"></i>純淨背景
-                    </button>
-                    <label for="bg-upload" class="text-xs font-bold active:opacity-100 cursor-pointer p-2 rounded-full transition-all" id="btn-bg-text">
-                        更換圖片
-                        <input type="file" id="bg-upload" accept="image/*" class="hidden">
+            <header class="p-6 pt-10 flex justify-between items-center">
+                <h1 class="text-3xl font-black italic tracking-tighter">JAPAN GO</h1>
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleLockScreen()" class="text-[10px] bg-white text-black font-bold px-3 py-1.5 rounded-full">鎖屏</button>
+                    <label class="text-[10px] font-bold bg-white/10 px-3 py-1.5 rounded-full" id="btn-bg-text">
+                        更換圖片 <input type="file" id="bg-upload" accept="image/*" class="hidden">
                     </label>
                 </div>
             </header>
 
             <main class="p-6 space-y-6">
-                <section class="card-floating rounded-3xl p-6 transition-all hover:scale-[1.02]">
-                    <p class="text-xs font-bold text-sub mb-5 text-center italic tracking-widest uppercase">JPY ⮕ TWD</p>
-                    <div class="flex items-center space-x-3 mb-5 border-b-2 border-white/20 pb-2 max-w-xs mx-auto">
-                        <span class="text-4xl font-bold text-sub">¥</span>
-                        <input type="number" id="jpy" class="w-full text-5xl font-bold outline-none" placeholder="0" inputmode="decimal">
-                    </div>
-                    <div class="flex flex-col items-center justify-center pt-2">
-                        <span class="text-sm text-sub mb-2">約等於</span>
-                        <div class="text-6xl font-black text-red-400 drop-shadow-lg">NT$ <span id="twd">0</span></div>
-                        <p id="rate-info" class="text-[11px] text-sub mt-4 italic">載入最新匯率中...</p>
+                <section class="card-frosted p-8">
+                    <p class="text-[10px] font-bold text-center tracking-[0.3em] opacity-60 mb-6">JPY ⮕ TWD</p>
+                    <input type="number" id="jpy" placeholder="0" inputmode="decimal" class="w-full outline-none">
+                    <div class="text-center mt-6">
+                        <div class="text-6xl font-black text-red-500">NT$ <span id="twd">0</span></div>
+                        <p id="rate-info" class="text-[10px] opacity-40 mt-4 italic"></p>
                     </div>
                 </section>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-floating rounded-2xl p-6 flex flex-col items-center active:scale-95 transition-transform">
+                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-6 flex flex-col items-center">
                         <i class="fa-solid fa-train-subway text-orange-400 text-3xl mb-3"></i>
-                        <span class="font-bold text-sm text-white/90">交通查詢</span>
+                        <span class="font-bold text-xs opacity-90">交通查詢</span>
                     </a>
-                    <a href="https://www.google.com/maps" target="_blank" class="card-floating rounded-2xl p-6 flex flex-col items-center active:scale-95 transition-transform">
+                    <a href="https://www.google.com/maps" target="_blank" class="card-frosted p-6 flex flex-col items-center">
                         <i class="fa-solid fa-map-location-dot text-blue-400 text-3xl mb-3"></i>
-                        <span class="font-bold text-sm text-white/90">Google Map</span>
+                        <span class="font-bold text-xs opacity-90">Google Map</span>
                     </a>
                 </div>
             </main>
-        </div>
-
-        <div id="weather-page" class="page min-h-screen">
-            <header class="p-6 pt-10 flex justify-between items-center sticky top-0 z-10">
-                <h2 class="text-2xl font-black italic drop-shadow-lg"><i class="fa-solid fa-cloud mr-2"></i>氣象中心</h2>
-                <button onclick="getGPS()" class="text-xs bg-white text-slate-900 font-bold px-5 py-2 rounded-full shadow-lg active:scale-90 transition-transform">
-                    <i class="fa-solid fa-location-crosshairs mr-1"></i>全球定位
-                </button>
-            </header>
-
-            <div class="p-6 space-y-6">
-                <div class="card-floating rounded-3xl p-7 shadow-xl relative overflow-hidden">
-                    <div class="flex items-center space-x-2 mb-5">
-                        <i class="fa-solid fa-location-dot text-sky-400 text-xl"></i>
-                        <p id="g-city" class="text-xl font-bold">載入位置中...</p>
-                    </div>
-                    <div class="flex items-end justify-between mb-6">
-                        <div>
-                            <p id="g-temp" class="text-8xl font-black tracking-tighter drop-shadow-lg">--°</p>
-                            <p id="g-desc" class="text-base font-medium text-sky-200 mt-1">正在等待衛星信號...</p>
-                        </div>
-                        <img id="g-icon" src="" alt="" class="w-28 h-28 -mb-4 -mr-4 weather-icon-lg">
-                    </div>
-                    <div id="g-details" class="mt-6 grid grid-cols-2 gap-x-8 gap-y-4 pt-6 border-t border-white/10 text-sm font-medium">
-                        <p><i class="fa-solid fa-wind mr-2 w-5 text-sky-400"></i>風向: --</p>
-                        <p><i class="fa-solid fa-sun mr-2 w-5 text-amber-400"></i>紫外線: --</p>
-                        <p><i class="fa-solid fa-droplet mr-2 w-5 text-blue-400"></i>濕度: --%</p>
-                        <p><i class="fa-solid fa-gauge mr-2 w-5 text-green-400"></i>氣壓: --hPa</p>
-                    </div>
-                </div>
-
-                <h3 class="text-xs font-bold text-sub tracking-widest pt-5 px-2 uppercase"><i class="fa-solid fa-city mr-2"></i>日本主要城市</h3>
-                <div id="city-list" class="space-y-4">
-                    <div class="card-floating rounded-2xl p-5 flex justify-between items-center transition-all hover:bg-white/10">
-                        <div>
-                            <p class="font-bold text-base">東京 Tokyo</p>
-                            <p id="d-Tokyo" class="text-xs text-sub mt-1 font-medium">讀取中</p>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <p id="t-Tokyo" class="text-4xl font-black drop-shadow-md">--°</p>
-                            <img id="i-Tokyo" src="" alt="" class="w-12 h-12">
-                        </div>
-                    </div>
-                    <div class="card-floating rounded-2xl p-5 flex justify-between items-center transition-all hover:bg-white/10">
-                        <div>
-                            <p class="font-bold text-base">大阪 Osaka</p>
-                            <p id="d-Osaka" class="text-xs text-sub mt-1 font-medium">讀取中</p>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <p id="t-Osaka" class="text-4xl font-black drop-shadow-md">--°</p>
-                            <img id="i-Osaka" src="" alt="" class="w-12 h-12">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <footer class="fixed bottom-0 left-0 right-0 p-5 z-50 pb-8 env(safe-area-inset-bottom)">
-        <div class="tab-bar-floating rounded-full p-2.5 flex justify-around items-center max-w-sm mx-auto shadow-2xl">
-            <button onclick="showPage('home-page')" id="tab-home" class="flex-1 flex flex-col items-center p-3.5 rounded-full text-sub active:scale-95 transition-all">
-                <i class="fa-solid fa-plane-departure text-xl mb-1.5"></i>
-                <span class="text-[11px] font-bold">旅遊工具</span>
-            </button>
-            <button onclick="showPage('weather-page')" id="tab-weather" class="flex-1 flex flex-col items-center p-3.5 rounded-full text-sub active:scale-95 transition-all">
-                <i class="fa-solid fa-cloud-sun text-xl mb-1.5"></i>
-                <span class="text-[11px] font-bold">即時天氣</span>
-            </button>
-        </div>
-    </footer>
-
-    <script>
-        const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
-        let currentRate = 0.211;
-
-        // --- 初始化背景圖片系統與智慧顏色 ---
-        const bgUpload = document.getElementById('bg-upload');
-        const savedBg = localStorage.getItem('user_bg_img');
-        const defaultBgUrl = 'https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?q=80&w=1000';
-
-        if (savedBg) {
-            applyBackgroundAndAnalyzeColor(savedBg);
-        } else {
-            // 預設圖片也需要分析
-            applyBackgroundAndAnalyzeColor(defaultBgUrl);
-        }
-
-        // 處理圖片上傳
-        bgUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const base64Img = event.target.result;
-                applyBackgroundAndAnalyzeColor(base64Img); // 套用並分析顏色
-                try {
-                    localStorage.setItem('user_bg_img', base64Img);
-                } catch (error) {
-                    alert("圖片檔案過大，無法儲存設定 (請上傳直立且小於 2MB 的圖片)");
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-
-        // ❗ 智慧顏色分析核心邏輯
-        function applyBackgroundAndAnalyzeColor(imgSrc) {
-            // 1. 套用背景
-            document.documentElement.style.setProperty('--bg-img', `url(${imgSrc})`);
-            
-            // 2. 創建 Canvas 分析亮度
-            const img = new Image();
-            img.src = imgSrc;
-            img.crossOrigin = "Anonymous"; // 處理跨域圖片
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 1; canvas.height = 1; // 縮小到 1x1 像素取平均值
-                
-                ctx.drawImage(img, 0, 0, 1, 1);
-                const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
-                
-                // 計算亮度 (HSP 演算法)
-                const brightness = Math.sqrt(0.299 * (r*r) + 0.587 * (g*g) + 0.114 * (b*b));
-                console.log("圖片平均亮度:", brightness);
-
-                // 3. 根據亮度自動切換 UI 顏色系統
-                const root = document.documentElement;
-                if (brightness > 160) { // 如果是亮色圖片 (如白天、雪景)
-                    // 切換到黑字系統
-                    root.style.setProperty('--text-color', '#111111');
-                    root.style.setProperty('--card-bg', 'rgba(0, 0, 0, 0.05)'); // 半透明黑卡片
-                    root.style.setProperty('--card-border', 'rgba(0, 0, 0, 0.1)');
-                    root.style.setProperty('--sub-text', 'rgba(0, 0, 0, 0.6)');
-                    root.style.setProperty('--tab-bg', 'rgba(255, 255, 255, 0.8)'); // 亮底部
-                    root.style.setProperty('--shadow-color', 'rgba(0, 0, 0, 0.1)');
-                } else { // 如果是暗色圖片 (如夜景、夕陽)
-                    // 切換到白字系統 (預設)
-                    root.style.setProperty('--text-color', '#ffffff');
-                    root.style.setProperty('--card-bg', 'rgba(255, 255, 255, 0.1)');
-                    root.style.setProperty('--card-border', 'rgba(255, 255, 255, 0.15)');
-                    root.style.setProperty('--sub-text', 'rgba(255, 255, 255, 0.6)');
-                    root.style.setProperty('--tab-bg', 'rgba(0, 0, 0, 0.7)');
-                    root.style.setProperty('--shadow-color', 'rgba(0, 0, 0, 0.3)');
-                }
-            };
-        }
-
-        // --- 頁面切換控器 ---
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            
-            const tabs = { 'home-page': 'tab-home', 'weather-page': 'tab-weather' };
-            document.querySelectorAll('footer button').forEach(b => b.classList.remove('text-red-400', 'bg-white/10', 'bg-black/10'));
-            
-            const activeTab = document.getElementById(tabs[pageId]);
-            // 根據當前智慧顏色調整 tab 的高亮背景顏色
-            const bgClass = document.documentElement.style.getPropertyValue('--text-color') === '#ffffff' ? 'bg-white/10' : 'bg-black/10';
-            activeTab.classList.add('text-red-400', bgClass);
-
-            if(pageId === 'weather-page') {
-                updateCities();
-                if(document.getElementById('g-city').innerText === "載入位置中...") getGPS();
-            }
-        }
-
-        // --- 匯率系統 ---
-        async function updateRate() {
-            try {
-                const r = await fetch('https://open.er-api.com/v6/latest/JPY');
-                const d = await r.json();
-                currentRate = d.rates.TWD;
-                document.getElementById('rate-info').innerText = `即時匯率: 1 JPY = ${currentRate.toFixed(4)} TWD`;
-            } catch(e) { console.error("匯率更新失敗"); }
-        }
-        document.getElementById('jpy').addEventListener('input', (e)=>{
-            const val = e.target.value;
-            document.getElementById('twd').innerText = val ? Math.round(val * currentRate).toLocaleString() : '0';
-        });
-
-        // --- 天氣 API 核心 ---
-        async function fetchWeatherDetail(city, tId, dId, iId, lat, lon) {
-            let url = `https://api.openweathermap.org/data/2.5/weather?q=${city},JP&units=metric&appid=${API_KEY}&lang=zh_tw`;
-            if(lat && lon) url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}&lang=zh_tw`;
-            
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                if(data.cod !== 200) throw new Error(data.message);
-                
-                const iconUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
-                const tempStr = Math.round(data.main.temp);
-
-                if(lat) {
-                    // 全球定位卡片與鎖屏介面天氣同步更新
-                    document.getElementById('g-city').innerText = `${data.name}, ${data.sys.country}`;
-                    document.getElementById('g-icon').src = iconUrl;
-                    document.getElementById('g-temp').innerText = tempStr + '°';
-                    document.getElementById('g-desc').innerText = data.weather[0].description;
-                    
-                    // 同步到鎖屏
-                    document.getElementById('lock-w-icon').src = iconUrl;
-                    document.getElementById('lock-w-temp').innerText = tempStr + '°C';
-                    document.getElementById('lock-w-desc').innerText = data.weather[0].description;
-
-                    // 時區顯示
-                    const timezoneHrs = data.timezone / 3600;
-                    document.getElementById('lock-timezone').innerText = `時區: UTC${timezoneHrs>=0?'+':''}${timezoneHrs} (${data.name})`;
-
-                    const windDirs = ['北','東北','東','東南','南','西南','西','西北'];
-                    const windStr = windDirs[Math.round(data.wind.deg/45)%8];
-                    
-                    const uvRes = await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${data.coord.lat}&lon=${data.coord.lon}&appid=${API_KEY}`);
-                    const uvData = await uvRes.json();
-                    
-                    document.getElementById('g-details').innerHTML = `
-                        <p><i class="fa-solid fa-wind mr-2 w-5 text-sky-400"></i>風向: ${windStr}風</p>
-                        <p><i class="fa-solid fa-sun mr-2 w-5 text-amber-400"></i>紫外線: ${uvData.value}</p>
-                        <p><i class="fa-solid fa-droplet mr-2 w-5 text-blue-400"></i>濕度: ${data.main.humidity}%</p>
-                        <p><i class="fa-solid fa-gauge mr-2 w-5 text-green-400"></i>氣壓: ${data.main.pressure}hPa</p>
-                    `;
-                } else {
-                    document.getElementById(tId).innerText = tempStr + '°';
-                    document.getElementById(dId).innerText = data.weather[0].description;
-                    document.getElementById(iId).src = iconUrl;
-                }
-            } catch(e) { console.error("天氣載入出錯:", e); }
-        }
-
-        function updateCities() {
-            fetchWeatherDetail('Tokyo', 't-Tokyo', 'd-Tokyo', 'i-Tokyo');
-            fetchWeatherDetail('Osaka', 't-Osaka', 'd-Osaka', 'i-Osaka');
-        }
-
-        function getGPS() {
-            document.getElementById('g-city').innerText = "定位中...";
-            document.getElementById('g-desc').innerText = "正在讀取 GPS 衛星訊號...";
-            navigator.geolocation.getCurrentPosition(pos => {
-                fetchWeatherDetail('', '', '', '', pos.coords.latitude, pos.coords.longitude);
-            }, () => {
-                document.getElementById('g-city').innerText = "定位失敗";
-                document.getElementById('g-desc').innerText = "請確認開啟 GPS 權限";
-            }, { timeout: 8000 });
-        }
-
-        // --- 手機鎖屏模式邏輯 (全新新增) ---
-        const lockScreen = document.getElementById('lock-screen');
-        const uiLayer = document.getElementById('ui-layer');
-        const tabBar = document.querySelector('footer');
-
-        function toggleLockScreen() {
-            const isActive = lockScreen.classList.toggle('active');
-            if (isActive) {
-                // 進入鎖屏：隱藏 UI 和底部
-                uiLayer.style.opacity = '0';
-                tabBar.style.opacity = '0';
-                setTimeout(()=>uiLayer.style.display = 'none', 300); // 延遲隱藏確保動畫流暢
-                updateLockTime(); // 立即更新時間
-                if(document.getElementById('lock-w-desc').innerText === "定位中...") getGPS(); // 進入鎖屏時自動定位獲取天氣
-            } else {
-                // 退出鎖屏：顯示 UI 和底部
-                uiLayer.style.display = 'block';
-                tabBar.style.opacity = '1';
-                setTimeout(()=>uiLayer.style.opacity = '1', 50);
-            }
-        }
-
-        // 更新鎖屏大時間
-        function updateLockTime() {
-            const now = new Date();
-            const hrs = now.getHours().toString().padStart(2, '0');
-            const mins = now.getMinutes().toString().padStart(2, '0');
-            const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-            const dayStr = days[now.getDay()];
-            const dateStr = `${now.getMonth()+1}月${now.getDate()}日`;
-
-            document.getElementById('lock-time').innerText = `${hrs}:${mins}`;
-            document.getElementById('lock-date').innerText = `${dayStr}, ${dateStr}`;
-        }
-        // 每分鐘定時更新鎖屏時間
-        setInterval(updateLockTime, 60000);
-
-        // 初始化
-        updateRate();
-        showPage('home-page'); 
-    </script>
-</body>
-</html>
