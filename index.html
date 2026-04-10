@@ -102,7 +102,9 @@
                 </div>
                 
                 <p class="text-[11px] font-black tracking-[0.3em] opacity-40 ml-2 uppercase" style="color: var(--text-color);">鄰近鄉鎮天氣</p>
-                <div class="space-y-4" id="nearby-list"></div>
+                <div class="space-y-4" id="nearby-list">
+                    <p class="text-center opacity-30 py-10">讀取周邊鄉鎮中...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -117,8 +119,8 @@
     <script>
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
+        let myCurrentTown = ""; // 儲存當前鄉鎮名用於過濾
 
-        // 背景與色彩自動切換
         function applyBg(src) {
             document.documentElement.style.setProperty('--bg-img', `url(${src})`);
             const img = new Image(); img.src = src;
@@ -147,33 +149,34 @@
             if(id === 'weather-page') getGPS();
         }
 
-        // 匯率
         async function updateRate() {
             try { const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json(); currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `即時匯率: 1 TWD = ${currentRate.toFixed(2)} JPY`; } catch(e) {}
         }
         document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
 
-        // 核心：天氣與強制繁體地名
+        // 取得行政區名稱的輔助函式
+        async function getTownName(lat, lon) {
+            try {
+                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
+                const res = await fetch(geoUrl);
+                const data = await res.json();
+                return data[0]?.local_names?.['zh'] || data[0]?.name || "";
+            } catch(e) { return ""; }
+        }
+
         async function fetchWeather(lat, lon) {
             try {
-                // 1. 取得當前位置繁體地名
-                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
-                const geoRes = await fetch(geoUrl);
-                const geoData = await geoRes.json();
-                let myCity = (geoData[0]?.local_names?.['zh'] || geoData[0]?.name || "未知區域").replace("Township", "鎮").replace("District", "區");
-                
-                // 2. 取得天氣資訊
+                myCurrentTown = await getTownName(lat, lon);
                 const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lang=zh_tw&lat=${lat}&lon=${lon}`;
                 const res = await fetch(weatherUrl);
                 const d = await res.json();
                 
                 const icon = `https://openweathermap.org/img/wn/${d.weather[0].icon}@4x.png`;
-                document.getElementById('g-city').innerText = myCity;
+                document.getElementById('g-city').innerText = myCurrentTown || d.name;
                 document.getElementById('g-temp').innerText = Math.round(d.main.temp) + '°';
                 document.getElementById('g-icon').src = icon;
                 document.getElementById('g-desc').innerText = d.weather[0].description;
                 
-                // 同步鎖屏
                 document.getElementById('lock-w-icon').src = icon;
                 document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°';
                 document.getElementById('lock-w-desc').innerText = d.weather[0].description;
@@ -183,30 +186,35 @@
         }
 
         async function fetchNearby(lat, lon) {
-            // 抓取周邊鄉鎮
-            const url = `https://api.openweathermap.org/data/2.5/find?lat=${lat}&lon=${lon}&cnt=7&units=metric&appid=${API_KEY}&lang=zh_tw`;
+            // cnt=12 抓多一點來過濾重複或大範圍地名
+            const url = `https://api.openweathermap.org/data/2.5/find?lat=${lat}&lon=${lon}&cnt=12&units=metric&appid=${API_KEY}&lang=zh_tw`;
             try {
                 const res = await fetch(url);
                 const d = await res.json();
                 const list = document.getElementById('nearby-list');
                 list.innerHTML = '';
 
-                // 對清單中的英文名稱進行強制翻譯檢查
-                for(let i = 1; i < d.list.length; i++) {
-                    const item = d.list[i];
-                    // 再次調用 geo reverse 來確保每個鄉鎮都是繁體中文
-                    const gUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${item.coord.lat}&lon=${item.coord.lon}&limit=1&appid=${API_KEY}`;
-                    const gRes = await fetch(gUrl);
-                    const gData = await gRes.json();
-                    const twName = gData[0]?.local_names?.['zh'] || item.name;
+                let displayedCount = 0;
+                let seenNames = new Set([myCurrentTown]); // 初始過濾掉當前所在地
 
-                    list.innerHTML += `<div class="card-frosted p-6 flex justify-between items-center">
-                        <span class="font-bold text-lg" style="color: var(--text-color);">${twName}</span>
-                        <div class="flex items-center space-x-4">
-                            <span class="text-3xl font-black" style="color: var(--text-color);">${Math.round(item.main.temp)}°</span>
-                            <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" class="w-10">
-                        </div>
-                    </div>`;
+                for(let item of d.list) {
+                    if (displayedCount >= 5) break; // 只顯示前 5 個不同的鄉鎮
+
+                    const twName = await getTownName(item.coord.lat, item.coord.lon);
+                    
+                    // 過濾掉重複的名稱、縣市級名稱，以及空白名稱
+                    if (twName && !seenNames.has(twName) && !twName.includes("縣") && !twName.includes("市")) {
+                        seenNames.add(twName);
+                        displayedCount++;
+                        
+                        list.innerHTML += `<div class="card-frosted p-6 flex justify-between items-center animate-fade-in">
+                            <span class="font-bold text-lg" style="color: var(--text-color);">${twName}</span>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-3xl font-black" style="color: var(--text-color);">${Math.round(item.main.temp)}°</span>
+                                <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" class="w-10">
+                            </div>
+                        </div>`;
+                    }
                 }
             } catch(e) {}
         }
