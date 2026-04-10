@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>旅遊工具 v5.1 - 天氣資訊版</title>
+    <title>旅遊工具 v5.3 - 數據修復版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -39,19 +39,18 @@
                     <p id="lock-date" class="text-lg font-bold text-white/60">載入中...</p>
                 </div>
             </div>
-            <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase italic">Travel Toolkit Sync</div>
+            <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase italic">Live Data Sync</div>
         </div>
         <div class="mt-auto w-full">
             <div class="card-frosted p-8 border-l-4 border-sky-500">
                 <div class="flex justify-between items-end">
                     <div>
                         <p id="lock-city" class="text-[10px] font-black opacity-40 mb-1 uppercase tracking-widest italic">搜尋中...</p>
-                        <p id="lock-w-desc" class="text-xl font-black text-white">等待衛星同步...</p>
+                        <p id="lock-w-desc" class="text-xl font-black text-white">正在同步衛星數據...</p>
                     </div>
                     <div id="lock-w-icon-box" class="text-5xl mb-1"></div>
                 </div>
             </div>
-            <p class="text-center text-[10px] font-black opacity-30 mt-6 tracking-[0.5em] uppercase">點擊解鎖介面</p>
         </div>
     </div>
 
@@ -62,7 +61,6 @@
                 <div class="flex items-center space-x-2">
                     <button onclick="toggleLockScreen()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:scale-90"><i class="fa-solid fa-expand"></i></button>
                     <button onclick="toggleTheme()" id="theme-btn" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:scale-90"><i class="fa-solid fa-moon"></i></button>
-                    <label class="text-[10px] font-black bg-white/5 px-4 py-3 rounded-full border border-white/10">背景<input type="file" id="bg-upload" accept="image/*" class="hidden"></label>
                 </div>
             </header>
             <main class="px-6">
@@ -75,7 +73,7 @@
                 </section>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center group"><i class="fa-solid fa-route text-orange-400 text-2xl mb-3"></i><span class="font-bold text-[10px] uppercase">乘換案內</span></a>
-                    <a href="https://maps.google.com" target="_blank" class="card-frosted p-8 flex flex-col items-center group"><i class="fa-solid fa-location-crosshairs text-blue-400 text-2xl mb-3"></i><span class="font-bold text-[10px] uppercase">精確導航</span></a>
+                    <a href="https://maps.google.com" target="_blank" class="card-frosted p-8 flex flex-col items-center group"><i class="fa-solid fa-location-crosshairs text-blue-400 text-2xl mb-3"></i><span class="font-bold text-[10px] uppercase">地圖導航</span></a>
                 </div>
             </main>
         </div>
@@ -99,97 +97,59 @@
     <script>
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
-        const countryNames = { 'TW': '台灣', 'JP': '日本' };
 
-        async function getBilingualName(lat, lon, fallback) {
+        // 新增：抓取紫外線數據的函式
+        async function getUVIndex(lat, lon) {
             try {
-                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
-                const res = await fetch(geoUrl);
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
                 const data = await res.json();
-                if (data && data[0]) {
-                    const enName = data[0].name;
-                    const zhName = data[0].local_names?.['zh'] || data[0].local_names?.['zh-tw'] || "";
-                    return (zhName && enName !== zhName) ? `${enName} / ${zhName}` : enName || fallback;
-                }
-            } catch (e) {}
-            return fallback;
-        }
-
-        async function getCityBilingual(cityName) {
-            try {
-                const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`;
-                const res = await fetch(geoUrl);
-                const data = await res.json();
-                if (data && data[0]) {
-                    const zh = data[0].local_names?.['zh'] || "";
-                    return zh ? `${cityName} / ${zh}` : cityName;
-                }
-            } catch (e) {}
-            return cityName;
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
-            document.getElementById('theme-btn').innerHTML = isLight ? '<i class="fa-solid fa-sun text-orange-500"></i>' : '<i class="fa-solid fa-moon text-sky-300"></i>';
-        }
-
-        function showPage(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.getElementById('tab-home').classList.toggle('opacity-30', id !== 'home-page');
-            document.getElementById('tab-weather').classList.toggle('opacity-30', id !== 'weather-page');
-            if(id === 'weather-page') fetchAllWeather();
+                return data.value !== undefined ? data.value : '搜尋中';
+            } catch (e) { return '搜尋中'; }
         }
 
         async function fetchAllWeather() {
             const container = document.getElementById('weather-content');
-            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在搜尋當地大氣數據...</div>`;
+            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">搜尋中...</div>`;
             
             navigator.geolocation.getCurrentPosition(async p => {
                 const lat = p.coords.latitude;
                 const lon = p.coords.longitude;
                 
-                const currentName = await getBilingualName(lat, lon, "搜尋中...");
+                // 1. 抓取當地天氣
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${lat}&lon=${lon}&lang=zh_tw`);
                 const d = await res.json();
+                const uv = await getUVIndex(lat, lon); // 呼叫紫外線 API
                 
-                const countryZH = countryNames[d.sys.country] || d.sys.country;
-                const localLabel = `${countryZH}天氣`;
-
-                let html = generateWeatherCard(currentName, d, localLabel, true);
+                let html = generateWeatherCard(d.name, d, "當地天氣", uv, true);
                 
-                const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
+                // 2. 抓取固定城市（日本重點城市）
+                const cities = ['Tokyo', 'Osaka', 'Sapporo'];
                 for(let city of cities) {
-                    const zhCity = await getCityBilingual(city);
                     const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
                     const dc = await resC.json();
-                    html += generateWeatherCard(zhCity, dc, "日本天氣", false);
+                    const uvc = await getUVIndex(dc.coord.lat, dc.coord.lon);
+                    html += generateWeatherCard(city, dc, "日本天氣", uvc, false);
                 }
                 container.innerHTML = html;
-                document.getElementById('lock-city').innerText = currentName;
-                document.getElementById('lock-w-desc').innerText = (d.weather[0].description || "搜尋中") + " " + Math.round(d.main.temp) + "°C";
-            }, () => { container.innerHTML = "請開啟 GPS 權限以搜尋天氣。"; });
+                document.getElementById('lock-city').innerText = d.name;
+                document.getElementById('lock-w-desc').innerText = d.weather[0].description + " " + Math.round(d.main.temp) + "°C";
+            });
         }
 
-        function generateWeatherCard(title, d, label, isMain = false) {
-            const windDir = (deg) => {
-                const arr = ["北","東北","東","東南","南","西南","西","西北"];
-                return arr[Math.round(deg / 45) % 8];
-            };
-
+        function generateWeatherCard(title, d, label, uv, isMain) {
+            const windDir = (deg) => ["北","東北","東","東南","南","西南","西","西北"][Math.round(deg / 45) % 8];
             return `
             <div class="card-frosted p-6 ${isMain ? 'border-l-4 border-sky-500' : ''}">
                 <div class="flex justify-between items-start">
                     <div>
-                        <span class="text-[9px] font-black bg-white/10 text-white/60 px-2 py-0.5 rounded uppercase tracking-tighter">${label}</span>
-                        <p class="text-lg font-black mt-1 leading-tight">${title || '搜尋中...'}</p>
+                        <span class="text-[9px] font-black bg-white/10 text-white/60 px-2 py-0.5 rounded uppercase">${label}</span>
+                        <p class="text-lg font-black mt-1">${title}</p>
                     </div>
                     <div class="text-3xl">${getWeatherIcon(d.weather[0].icon)}</div>
                 </div>
                 <div class="flex items-end gap-2 mt-4">
                     <span class="text-4xl font-black">${Math.round(d.main.temp)}°</span>
-                    <span class="text-xs font-bold opacity-40 mb-1">${d.weather[0].description || '搜尋中'}</span>
+                    <span class="text-xs font-bold opacity-40 mb-1">${d.weather[0].description}</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/5">
                     <div class="text-center">
@@ -202,7 +162,7 @@
                     </div>
                     <div class="text-center">
                         <p class="text-[9px] font-black opacity-30 uppercase">紫外線</p>
-                        <p class="text-xs font-bold">搜尋中</p>
+                        <p class="text-xs font-bold">${uv}</p>
                     </div>
                 </div>
             </div>`;
@@ -213,28 +173,24 @@
             const c = code.substring(0, 2);
             switch(c) {
                 case '01': return isNight ? '<i class="fa-solid fa-moon text-yellow-200"></i>' : '<i class="fa-solid fa-sun text-orange-400"></i>';
-                case '02': return isNight ? '<i class="fa-solid fa-cloud-moon text-blue-200"></i>' : '<i class="fa-solid fa-cloud-sun text-orange-200"></i>';
                 case '09': case '10': return '<i class="fa-solid fa-cloud-showers-water text-sky-400"></i>';
-                case '13': return '<i class="fa-solid fa-snowflake text-white"></i>';
                 default: return '<i class="fa-solid fa-cloud opacity-40"></i>';
             }
         }
 
-        async function updateRate() {
-            try {
-                const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json();
-                currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `1 TWD = ${currentRate.toFixed(2)} JPY`;
-            } catch(e) { }
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
+        function showPage(id) { 
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id === 'weather-page') fetchAllWeather();
         }
-        document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
         function toggleLockScreen() { document.getElementById('lock-screen').classList.toggle('active'); updateTime(); }
         function updateTime() {
             const n = new Date();
             document.getElementById('lock-time').innerText = n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
-            const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-            document.getElementById('lock-date').innerText = `${n.getMonth()+1}月${n.getDate()}日 ${days[n.getDay()]}`;
+            document.getElementById('lock-date').innerText = `${n.getMonth()+1}月${n.getDate()}日`;
         }
-        setInterval(updateTime, 1000); updateRate(); showPage('home-page');
+        setInterval(updateTime, 1000); showPage('home-page');
     </script>
 </body>
 </html>
