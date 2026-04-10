@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/826/826070.png">
-    <title>日本助手 - 專業版</title>
+    <title>日本助手 - AI 強化版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -26,11 +26,14 @@
         .page.active { display: block; opacity: 1; }
         .card-frosted { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(var(--glass-blur)) saturate(160%); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%); box-shadow: 0 15px 35px rgba(0,0,0,0.4); border-radius: 30px; }
         .tab-bar { background: var(--tab-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); }
+        input::placeholder { color: rgba(255,255,255,0.3); }
         
         #lock-time { font-size: 6.5rem; font-weight: 800; letter-spacing: -3px; line-height: 1; text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .lock-screen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: rgba(0,0,0,0.1); display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 100px; }
         .lock-screen-overlay.active { display: flex; animation: lockFadeIn 0.3s ease-out; }
         @keyframes lockFadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
+        .ai-glow { animation: glow 2s infinite alternate; }
+        @keyframes glow { from { box-shadow: 0 0 5px rgba(168, 85, 247, 0.2); } to { box-shadow: 0 0 20px rgba(168, 85, 247, 0.6); } }
     </style>
 </head>
 <body>
@@ -87,24 +90,37 @@
         <div id="weather-page" class="page">
             <header class="p-8 pt-12 flex justify-between items-center">
                 <h2 class="text-2xl font-black italic" style="color: var(--text-color);">精準氣象</h2>
-                <button onclick="getGPS()" class="text-[11px] bg-white text-black font-black px-5 py-2 rounded-full">更新位置</button>
+                <button onclick="refreshWeather()" class="text-[11px] bg-white text-black font-black px-5 py-2 rounded-full">刷新數據</button>
             </header>
             
             <div class="px-6 space-y-6">
                 <div class="card-frosted p-10 text-center">
-                    <p class="text-[10px] font-black opacity-50 uppercase tracking-[0.3em] mb-2" style="color: var(--text-color);">當前行政區</p>
-                    <p id="g-city" class="text-3xl font-black mb-6" style="color: var(--text-color);">定位中...</p>
+                    <p class="text-[10px] font-black opacity-50 uppercase tracking-[0.3em] mb-2" style="color: var(--text-color);">當前定位</p>
+                    <p id="g-city" class="text-3xl font-black mb-6" style="color: var(--text-color);">讀取中...</p>
                     <div class="flex justify-between items-center px-4">
                         <p id="g-temp" class="text-8xl font-black tracking-tighter" style="color: var(--text-color);">--°</p>
                         <img id="g-icon" src="" class="w-28 h-28">
                     </div>
                     <p id="g-desc" class="text-sky-400 font-black mt-4 text-xl">--</p>
                 </div>
-                
-                <p class="text-[11px] font-black tracking-[0.3em] opacity-40 ml-2 uppercase" style="color: var(--text-color);">鄰近鄉鎮天氣</p>
-                <div class="space-y-4" id="nearby-list">
-                    <p class="text-center opacity-30 py-10">讀取周邊鄉鎮中...</p>
+
+                <div class="card-frosted p-6 ai-glow border-purple-500/30">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
+                            <span class="font-black text-[10px] tracking-widest opacity-50">AI 旅遊指南</span>
+                        </div>
+                        <button onclick="getAIAdvice()" id="ai-btn" class="text-[10px] font-bold bg-purple-500 text-white px-3 py-1 rounded-full">獲取建議</button>
+                    </div>
+                    <p id="ai-content" class="text-sm font-bold leading-relaxed opacity-80">點擊按鈕，讓 AI 分析當前天氣並給予穿衣與旅遊建議。</p>
                 </div>
+                
+                <div class="flex justify-between items-center px-2">
+                    <p class="text-[11px] font-black tracking-[0.3em] opacity-40 uppercase" style="color: var(--text-color);">自訂追蹤地區</p>
+                    <button onclick="saveCustomPlaces()" class="text-[10px] font-bold text-blue-400">儲存</button>
+                </div>
+                <div class="space-y-4" id="custom-container">
+                    </div>
             </div>
         </div>
     </div>
@@ -118,9 +134,10 @@
 
     <script>
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
+        const GEMINI_KEY = 'YOUR_GEMINI_API_KEY'; // 請在此處填入你的 Gemini API Key
         let currentRate = 4.75;
-        let myCurrentTown = ""; // 儲存當前鄉鎮名用於過濾
 
+        // --- 1. 背景與 UI 邏輯 ---
         function applyBg(src) {
             document.documentElement.style.setProperty('--bg-img', `url(${src})`);
             const img = new Image(); img.src = src;
@@ -146,88 +163,140 @@
             document.getElementById(id).classList.add('active');
             document.getElementById('tab-home').style.color = (id === 'home-page' ? '#fff' : 'rgba(255,255,255,0.3)');
             document.getElementById('tab-weather').style.color = (id === 'weather-page' ? '#fff' : 'rgba(255,255,255,0.3)');
-            if(id === 'weather-page') getGPS();
+            if(id === 'weather-page') { initWeather(); }
         }
 
+        // --- 2. 匯率邏輯 ---
         async function updateRate() {
             try { const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json(); currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `即時匯率: 1 TWD = ${currentRate.toFixed(2)} JPY`; } catch(e) {}
         }
         document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
 
-        // 取得行政區名稱的輔助函式
-        async function getTownName(lat, lon) {
-            try {
-                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
-                const res = await fetch(geoUrl);
-                const data = await res.json();
-                return data[0]?.local_names?.['zh'] || data[0]?.name || "";
-            } catch(e) { return ""; }
+        // --- 3. 天氣核心邏輯 (含 10 分鐘快取) ---
+        async function initWeather() {
+            const cache = JSON.parse(localStorage.getItem('weather_main_cache'));
+            const now = Date.now();
+
+            if (cache && (now - cache.time < 600000)) { // 10 分鐘 (600,000 毫秒)
+                renderWeather(cache.data, cache.city);
+                loadCustomPlaces();
+            } else {
+                getGPS();
+            }
         }
 
-        async function fetchWeather(lat, lon) {
-            try {
-                myCurrentTown = await getTownName(lat, lon);
-                const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lang=zh_tw&lat=${lat}&lon=${lon}`;
-                const res = await fetch(weatherUrl);
-                const d = await res.json();
-                
-                const icon = `https://openweathermap.org/img/wn/${d.weather[0].icon}@4x.png`;
-                document.getElementById('g-city').innerText = myCurrentTown || d.name;
-                document.getElementById('g-temp').innerText = Math.round(d.main.temp) + '°';
-                document.getElementById('g-icon').src = icon;
-                document.getElementById('g-desc').innerText = d.weather[0].description;
-                
-                document.getElementById('lock-w-icon').src = icon;
-                document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°';
-                document.getElementById('lock-w-desc').innerText = d.weather[0].description;
+        function refreshWeather() { localStorage.removeItem('weather_main_cache'); getGPS(); loadCustomPlaces(true); }
 
-                fetchNearby(lat, lon); 
-            } catch(e) {}
-        }
-
-        async function fetchNearby(lat, lon) {
-            // cnt=12 抓多一點來過濾重複或大範圍地名
-            const url = `https://api.openweathermap.org/data/2.5/find?lat=${lat}&lon=${lon}&cnt=12&units=metric&appid=${API_KEY}&lang=zh_tw`;
-            try {
-                const res = await fetch(url);
-                const d = await res.json();
-                const list = document.getElementById('nearby-list');
-                list.innerHTML = '';
-
-                let displayedCount = 0;
-                let seenNames = new Set([myCurrentTown]); // 初始過濾掉當前所在地
-
-                for(let item of d.list) {
-                    if (displayedCount >= 5) break; // 只顯示前 5 個不同的鄉鎮
-
-                    const twName = await getTownName(item.coord.lat, item.coord.lon);
+        function getGPS() {
+            navigator.geolocation.getCurrentPosition(
+                async p => {
+                    const lat = p.coords.latitude; const lon = p.coords.longitude;
+                    const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`);
+                    const geoData = await geoRes.json();
+                    const city = geoData[0]?.local_names?.['zh'] || geoData[0]?.name || "未知區域";
                     
-                    // 過濾掉重複的名稱、縣市級名稱，以及空白名稱
-                    if (twName && !seenNames.has(twName) && !twName.includes("縣") && !twName.includes("市")) {
-                        seenNames.add(twName);
-                        displayedCount++;
-                        
-                        list.innerHTML += `<div class="card-frosted p-6 flex justify-between items-center animate-fade-in">
-                            <span class="font-bold text-lg" style="color: var(--text-color);">${twName}</span>
-                            <div class="flex items-center space-x-4">
-                                <span class="text-3xl font-black" style="color: var(--text-color);">${Math.round(item.main.temp)}°</span>
-                                <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" class="w-10">
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lang=zh_tw&lat=${lat}&lon=${lon}`);
+                    const data = await res.json();
+                    
+                    if(res.status === 429) { alert("API 額度已達上限，請一小時後再試"); return; }
+                    
+                    const cacheObj = { time: Date.now(), data: data, city: city };
+                    localStorage.setItem('weather_main_cache', JSON.stringify(cacheObj));
+                    renderWeather(data, city);
+                },
+                e => { alert("請開啟定位權限以獲取精準天氣"); },
+                { enableHighAccuracy: true }
+            );
+        }
+
+        function renderWeather(d, city) {
+            const icon = `https://openweathermap.org/img/wn/${d.weather[0].icon}@4x.png`;
+            document.getElementById('g-city').innerText = city;
+            document.getElementById('g-temp').innerText = Math.round(d.main.temp) + '°';
+            document.getElementById('g-icon').src = icon;
+            document.getElementById('g-desc').innerText = d.weather[0].description;
+            
+            // 同步鎖屏
+            document.getElementById('lock-w-icon').src = icon;
+            document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°';
+            document.getElementById('lock-w-desc').innerText = d.weather[0].description;
+        }
+
+        // --- 4. AI 助手邏輯 ---
+        async function getAIAdvice() {
+            const content = document.getElementById('ai-content');
+            const btn = document.getElementById('ai-btn');
+            const city = document.getElementById('g-city').innerText;
+            const temp = document.getElementById('g-temp').innerText;
+            const desc = document.getElementById('g-desc').innerText;
+
+            if (GEMINI_KEY === 'YOUR_GEMINI_API_KEY') {
+                content.innerText = "請在代碼中填入你的 Gemini API Key 才能開啟 AI 功能。";
+                return;
+            }
+
+            btn.innerText = "思考中...";
+            btn.disabled = true;
+
+            const prompt = `你是日本自助助手。目前在${city}，天氣${desc}，氣溫${temp}。請用40字以內的繁體中文，針對穿著建議和旅遊提醒給出一個具備幽默感且精闢的回答。`;
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const d = await res.json();
+                content.innerText = d.candidates[0].content.parts[0].text;
+            } catch (e) {
+                content.innerText = "AI 暫時離線，可能是額度爆了或是 Key 有誤。";
+            } finally {
+                btn.innerText = "獲取建議";
+                btn.disabled = false;
+            }
+        }
+
+        // --- 5. 自訂地區邏輯 ---
+        const customContainer = document.getElementById('custom-container');
+        function saveCustomPlaces() {
+            const inputs = document.querySelectorAll('.custom-input');
+            const places = Array.from(inputs).map(i => i.value);
+            localStorage.setItem('custom_places_v2', JSON.stringify(places));
+            loadCustomPlaces(true);
+        }
+
+        async function loadCustomPlaces(forceRefresh = false) {
+            const saved = JSON.parse(localStorage.getItem('custom_places_v2') || '["", "", ""]');
+            customContainer.innerHTML = '';
+            saved.forEach(async (name, i) => {
+                const html = `
+                    <div class="card-frosted p-4 flex flex-col space-y-3">
+                        <input type="text" value="${name}" placeholder="地區 ${i+1}" class="custom-input bg-white/5 p-3 rounded-xl border border-white/10 outline-none font-bold text-sm">
+                        <div id="res-${i}" class="flex justify-between items-center px-2 ${name ? '' : 'hidden'}">
+                            <span class="font-black text-lg">${name}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="font-black text-2xl" id="temp-res-${i}">--°</span>
+                                <img id="icon-res-${i}" src="" class="w-10">
                             </div>
-                        </div>`;
-                    }
+                        </div>
+                    </div>`;
+                customContainer.innerHTML += html;
+                if(name) fetchCityWeather(name, i);
+            });
+        }
+
+        async function fetchCityWeather(city, index) {
+            try {
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
+                const d = await res.json();
+                if(d.cod === 200) {
+                    document.getElementById(`temp-res-${index}`).innerText = Math.round(d.main.temp) + '°';
+                    document.getElementById(`icon-res-${index}`).src = `https://openweathermap.org/img/wn/${d.weather[0].icon}.png`;
                 }
             } catch(e) {}
         }
 
-        function getGPS() { 
-            document.getElementById('g-city').innerText = "定位中...";
-            navigator.geolocation.getCurrentPosition(
-                p => fetchWeather(p.coords.latitude, p.coords.longitude),
-                e => { alert("請開啟高精度定位"); },
-                { enableHighAccuracy: true }
-            ); 
-        }
-
+        // --- 6. 時間與鎖屏 ---
         function toggleLockScreen() {
             const ls = document.getElementById('lock-screen');
             const isActive = ls.classList.toggle('active');
