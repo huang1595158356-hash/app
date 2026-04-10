@@ -8,69 +8,72 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { 
-            --bg-img: none; --text-color: #ffffff; --card-bg: rgba(255, 255, 255, 0.1);
-            --tab-bg: rgba(0, 0, 0, 0.7); --glass-blur: 45px; --base-bg: #000;
+            --bg-img: none; --text-color: #ffffff; 
+            --card-bg: rgba(255, 255, 255, 0.08); /* 極限薄度 */
+            --tab-bg: rgba(20, 20, 20, 0.8); 
+            --glass-blur: 50px; 
+            --base-bg: linear-gradient(135deg, #121212 0%, #000000 100%);
         }
         
         body.light-mode {
             --text-color: #1a1a1a;
-            --card-bg: rgba(255, 255, 255, 0.4); /* 白晝模式下的玻璃底色 */
-            --tab-bg: rgba(255, 255, 255, 0.8);
-            --base-bg: #e5e7eb;
+            --card-bg: rgba(255, 255, 255, 0.45);
+            --tab-bg: rgba(255, 255, 255, 0.85);
+            --base-bg: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         }
 
         body, html { 
             height: 100%; margin: 0; overflow: hidden; background: var(--base-bg); max-width: 500px; margin: 0 auto; 
             color: var(--text-color); 
-            font-family: -apple-system, "SF Pro Display", "PingFang TC", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             transition: background 0.5s ease;
         }
 
-        /* 確保背景層在最下面但可見 */
         .bg-layer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--base-bg); 
-            background-image: var(--bg-img); 
+            background: var(--base-bg); background-image: var(--bg-img); 
             background-size: cover; background-position: center; 
-            z-index: 1; 
+            z-index: 1; transform: scale(1.1); /* 稍微放大背景讓邊緣模糊更自然 */
         }
 
         .content-layer { position: relative; width: 100%; height: 100%; z-index: 2; overflow-y: auto; padding-top: env(safe-area-inset-top); }
         
-        .page { display: none; opacity: 0; transition: opacity 0.3s ease; padding-bottom: 140px; }
-        .page.active { display: block; opacity: 1; }
-        
-        /* 核心毛玻璃樣式修復 */
+        /* 核心毛玻璃樣式 - 終極強化 */
         .card-frosted { 
-            background: var(--card-bg) !important; 
-            backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important; 
-            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important; 
-            border: 1px solid rgba(255, 255, 255, 0.15); 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
-            border-radius: 32px; 
-            transition: all 0.4s ease;
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(var(--glass-blur)) saturate(230%) brightness(110%) !important;
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(230%) brightness(110%) !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.05);
+            border-radius: 35px;
+            margin-bottom: 20px;
+        }
+
+        /* 模式切換按鈕效果 */
+        #theme-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .tab-bar { 
             background: var(--tab-bg); 
-            backdrop-filter: blur(25px) saturate(150%); 
-            -webkit-backdrop-filter: blur(25px) saturate(150%); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(30px) saturate(180%); 
+            -webkit-backdrop-filter: blur(30px) saturate(180%); 
+            border: 1.5px solid rgba(255, 255, 255, 0.1); 
         }
-        
-        /* 天氣圖標 */
-        .w-color-sun { color: #ff9f43; filter: drop-shadow(0 0 8px rgba(255,159,67,0.4)); }
-        .w-color-moon { color: #f6e05e; filter: drop-shadow(0 0 10px rgba(246,224,94,0.5)); }
-        .w-color-cloud { color: #94a3b8; }
-        .w-color-rain { color: #38bdf8; }
-        .w-color-bolt { color: #a855f7; }
-        .w-color-snow { color: #ffffff; filter: drop-shadow(0 0 5px white); }
 
+        /* 天氣圖標發光 */
+        .w-color-sun { color: #ff9f43; filter: drop-shadow(0 0 12px rgba(255,159,67,0.6)); }
+        .w-color-moon { color: #f6e05e; filter: drop-shadow(0 0 15px rgba(246,224,94,0.7)); }
+        .w-color-rain { color: #38bdf8; filter: drop-shadow(0 0 8px #38bdf8); }
+        
         #lock-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; 
-            background: rgba(0,0,0,0.3); display: none; flex-direction: column; 
-            align-items: center; justify-content: flex-start; padding-top: 100px; 
-            backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            background: rgba(0,0,0,0.4); display: none; flex-direction: column; 
+            align-items: center; justify-content: flex-start; padding-top: 120px; 
+            backdrop-filter: blur(50px) brightness(80%); -webkit-backdrop-filter: blur(50px) brightness(80%);
         }
         #lock-screen.active { display: flex; }
     </style>
@@ -80,12 +83,12 @@
 
     <div id="lock-screen" onclick="toggleLockScreen()">
         <p id="lock-time" class="text-8xl font-black text-white tracking-tighter">00:00</p>
-        <p id="lock-date" class="text-xl font-bold mt-2 text-white/80 tracking-widest">日期讀取中</p>
-        <div class="mt-12 bg-white/10 p-8 rounded-[40px] border border-white/20 flex items-center gap-6 backdrop-blur-3xl">
-            <div id="lock-w-icon-box" class="text-7xl"></div>
+        <p id="lock-date" class="text-xl font-bold mt-2 text-white/70">日期讀取中</p>
+        <div class="mt-16 card-frosted p-8 flex items-center gap-6 w-80">
+            <div id="lock-w-icon-box" class="text-6xl"></div>
             <div class="text-white">
-                <p id="lock-w-temp" class="text-5xl font-black">--°</p>
-                <p id="lock-w-desc" class="font-bold opacity-70">讀取中</p>
+                <p id="lock-w-temp" class="text-4xl font-black">--°</p>
+                <p id="lock-w-desc" class="font-bold opacity-60">讀取中</p>
             </div>
         </div>
     </div>
@@ -95,19 +98,19 @@
             <header class="p-8 pt-12 flex justify-between items-center">
                 <h1 class="text-4xl font-black italic tracking-tighter">JP</h1>
                 <div class="flex items-center space-x-3">
-                    <button onclick="toggleTheme()" id="theme-btn" class="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-xl shadow-lg border border-white/10 active:scale-90 transition-transform">
+                    <button onclick="toggleTheme()" id="theme-btn" class="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-2xl active:scale-90 transition-transform">
                         <i class="fa-solid fa-moon"></i>
                     </button>
-                    <label class="text-[11px] font-black bg-white/10 px-4 py-2.5 rounded-full border border-white/10">
+                    <label class="text-[11px] font-black bg-white/10 px-5 py-3 rounded-full border border-white/20">
                         背景 <input type="file" id="bg-upload" accept="image/*" class="hidden">
                     </label>
-                    <button onclick="toggleLockScreen()" class="text-[11px] bg-sky-500 text-white font-black px-5 py-2.5 rounded-full shadow-lg">預覽</button>
+                    <button onclick="toggleLockScreen()" class="text-[11px] bg-sky-500 text-white font-black px-5 py-3 rounded-full shadow-lg">鎖定</button>
                 </div>
             </header>
             
-            <main class="p-6 space-y-6">
+            <main class="p-6">
                 <section class="card-frosted p-10 text-center">
-                    <p class="text-[10px] font-black tracking-[0.4em] opacity-40 mb-8 uppercase">Exchange Rate</p>
+                    <p class="text-[11px] font-black tracking-[0.4em] opacity-40 mb-8 uppercase">Exchange Rate</p>
                     <div class="flex items-center justify-center space-x-2">
                         <span class="text-2xl font-bold opacity-20">$</span>
                         <input type="number" id="twd-input" placeholder="0" inputmode="decimal" class="text-6xl font-black w-full text-center bg-transparent outline-none">
@@ -118,7 +121,7 @@
                     </div>
                 </section>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-4 mt-6">
                     <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center">
                         <i class="fa-solid fa-train-subway text-orange-400 text-3xl mb-4"></i>
                         <span class="font-bold text-[10px] uppercase tracking-widest">交通查詢</span>
@@ -128,16 +131,16 @@
                         <span class="font-bold text-[10px] uppercase tracking-widest">地圖導航</span>
                     </a>
                 </div>
-                <button onclick="resetSettings()" class="w-full py-4 text-[10px] font-bold opacity-30 uppercase tracking-[0.4em]">重置設定</button>
+                <button onclick="resetSettings()" class="w-full py-10 text-[10px] font-bold opacity-20 uppercase tracking-[0.5em]">Reset All</button>
             </main>
         </div>
 
         <div id="weather-page" class="page">
             <header class="p-8 pt-12 flex justify-between items-center">
                 <h2 class="text-2xl font-black italic tracking-widest uppercase">Weather</h2>
-                <button onclick="fetchAllWeather()" class="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center border border-white/10 active:rotate-180 transition-transform"><i class="fa-solid fa-rotate"></i></button>
+                <button onclick="fetchAllWeather()" class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center border border-white/20 active:rotate-180 transition-transform"><i class="fa-solid fa-rotate"></i></button>
             </header>
-            <div id="weather-content" class="px-6 space-y-4 pb-10">
+            <div id="weather-content" class="px-6 space-y-4 pb-12">
                 </div>
         </div>
     </div>
@@ -153,7 +156,6 @@
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
 
-        // 模式切換
         function toggleTheme(force = null) {
             const body = document.body;
             const btn = document.getElementById('theme-btn');
@@ -174,7 +176,6 @@
         else if (savedTheme === 'dark') toggleTheme(false);
         else toggleTheme(new Date().getHours() >= 6 && new Date().getHours() < 18);
 
-        // 向量圖標邏輯
         function getWeatherIconHTML(iconCode) {
             const isNight = iconCode.endsWith('n');
             const code = iconCode.substring(0, 2);
@@ -189,7 +190,6 @@
             }
         }
 
-        // 背景
         function applyBg(src) { document.documentElement.style.setProperty('--bg-img', `url(${src})`); }
         const savedBg = localStorage.getItem('user_bg_img');
         if (savedBg) applyBg(savedBg);
@@ -201,13 +201,12 @@
 
         function resetSettings() { localStorage.clear(); location.reload(); }
 
-        // 數據
         async function fetchAllWeather() {
             const container = document.getElementById('weather-content');
             container.innerHTML = `<div class="card-frosted p-8 border-l-8 border-sky-400">
-                <p class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-2">Location</p>
-                <div class="flex justify-between items-center"><p id="g-city" class="text-2xl font-black">讀取中...</p><span id="g-temp" class="text-5xl font-black">--°</span></div>
-                <div id="g-icon-box" class="text-4xl mt-2"></div>
+                <p class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-2">GPS Location</p>
+                <div class="flex justify-between items-center"><p id="g-city" class="text-2xl font-black">Locating...</p><span id="g-temp" class="text-5xl font-black">--°</span></div>
+                <div id="g-icon-box" class="text-4xl mt-3"></div>
             </div>`;
             
             const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
@@ -217,7 +216,7 @@
                 try {
                     const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
                     const d = await res.json();
-                    container.innerHTML += `<div class="card-frosted p-6 flex justify-between items-center">
+                    container.innerHTML += `<div class="card-frosted p-7 flex justify-between items-center">
                         <span class="font-black text-lg italic uppercase">${nameMap[city]}</span>
                         <div class="flex items-center gap-5">
                             <span class="font-black text-2xl">${Math.round(d.main.temp)}°</span>
