@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JP Tech v4.5 - 全自動地理中文化</title>
+    <title>JP Tech v4.7 - 在地化天氣版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -36,27 +36,21 @@
                 <p id="lock-time" class="text-7xl font-black text-white tracking-tighter leading-none">00:00</p>
                 <div class="flex items-center gap-3 mt-4">
                     <span class="bg-sky-500 text-white text-[10px] px-2 py-0.5 font-black rounded italic">GMT+8</span>
-                    <p id="lock-date" class="text-lg font-bold text-white/60">日期載入中</p>
+                    <p id="lock-date" class="text-lg font-bold text-white/60">載入中...</p>
                 </div>
             </div>
-            <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase italic">Global Geo-Intelligence</div>
+            <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase italic">Precise Geo-Sync</div>
         </div>
-
         <div class="mt-auto w-full">
             <div class="card-frosted p-8 border-l-4 border-sky-500">
                 <div class="flex justify-between items-end">
                     <div>
-                        <p id="lock-city" class="text-xs font-black opacity-40 mb-1 uppercase tracking-widest italic">定位中...</p>
-                        <p id="lock-w-desc" class="text-2xl font-black text-white">同步數據...</p>
+                        <p id="lock-city" class="text-[10px] font-black opacity-40 mb-1 uppercase tracking-widest italic">Locating...</p>
+                        <p id="lock-w-desc" class="text-xl font-black text-white">Syncing Weather...</p>
                     </div>
                     <div id="lock-w-icon-box" class="text-5xl mb-1"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-3 mt-6 border-t border-white/5 pt-4">
-                    <div class="text-[11px] text-white/50 font-bold">溫度: <span id="lock-w-temp" class="text-white">--</span></div>
-                    <div class="text-[11px] text-white/50 font-bold">濕度: <span id="lock-w-pop" class="text-white">--</span></div>
-                </div>
             </div>
-            <p class="text-center text-[10px] font-black opacity-30 mt-6 tracking-[0.5em] uppercase">Click to Unlock</p>
         </div>
     </div>
 
@@ -65,32 +59,22 @@
             <header class="p-8 pt-14 flex justify-between items-center">
                 <h1 class="text-3xl font-black italic tracking-tighter">JP-TECH</h1>
                 <div class="flex items-center space-x-2">
-                    <button onclick="toggleLockScreen()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-sm border border-white/10 active:scale-90"><i class="fa-solid fa-expand"></i></button>
-                    <button onclick="toggleTheme()" id="theme-btn" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-base border border-white/10 active:scale-90"><i class="fa-solid fa-moon"></i></button>
+                    <button onclick="toggleLockScreen()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:scale-90"><i class="fa-solid fa-expand"></i></button>
+                    <button onclick="toggleTheme()" id="theme-btn" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:scale-90"><i class="fa-solid fa-moon"></i></button>
                     <label class="text-[10px] font-black bg-white/5 px-4 py-3 rounded-full border border-white/10">背景<input type="file" id="bg-upload" accept="image/*" class="hidden"></label>
                 </div>
             </header>
-            
             <main class="px-6">
                 <section class="card-frosted p-10 text-center relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-sky-500"></div>
                     <p class="text-[10px] font-black tracking-[0.6em] opacity-30 mb-8 uppercase">Live Exchange Rate</p>
-                    <div class="flex items-center justify-center">
-                        <input type="number" id="twd-input" placeholder="TWD" inputmode="decimal" class="text-6xl font-black w-full text-center bg-transparent outline-none">
-                    </div>
+                    <input type="number" id="twd-input" placeholder="TWD" inputmode="decimal" class="text-6xl font-black w-full text-center bg-transparent outline-none">
                     <div class="mt-8 text-5xl font-black text-sky-500">¥ <span id="jpy-output">0</span></div>
                     <p id="rate-info" class="text-[10px] opacity-40 mt-5 font-bold uppercase"></p>
                 </section>
-                
                 <div class="grid grid-cols-2 gap-4 mt-2">
-                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center group">
-                        <i class="fa-solid fa-route text-orange-400 text-2xl mb-3"></i>
-                        <span class="font-bold text-[10px] uppercase tracking-widest">乘換案內</span>
-                    </a>
-                    <a href="https://maps.google.com" target="_blank" class="card-frosted p-8 flex flex-col items-center group">
-                        <i class="fa-solid fa-location-crosshairs text-blue-400 text-2xl mb-3"></i>
-                        <span class="font-bold text-[10px] uppercase tracking-widest">精確導航</span>
-                    </a>
+                    <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center group"><i class="fa-solid fa-route text-orange-400 text-2xl mb-3"></i><span class="font-bold text-[10px] uppercase">乘換案內</span></a>
+                    <a href="https://maps.google.com" target="_blank" class="card-frosted p-8 flex flex-col items-center group"><i class="fa-solid fa-location-crosshairs text-blue-400 text-2xl mb-3"></i><span class="font-bold text-[10px] uppercase">精確導航</span></a>
                 </div>
             </main>
         </div>
@@ -115,36 +99,38 @@
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
 
-        // 全自動地名解析函式：支持全球任何鄉鎮
-        async function getAutoZHName(lat, lon, fallbackName = "") {
+        const countryNames = { 'TW': '台灣', 'JP': '日本', 'HK': '香港', 'US': '美國' };
+
+        async function getBilingualName(lat, lon, fallback) {
             try {
-                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=5&appid=${API_KEY}`;
+                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
                 const res = await fetch(geoUrl);
                 const data = await res.json();
                 if (data && data[0]) {
-                    // 優先權：繁中 > 簡中 > 英文 > API回傳名稱
-                    return data[0].local_names?.['zh'] || data[0].local_names?.['zh-tw'] || data[0].name;
+                    const enName = data[0].name;
+                    const zhName = data[0].local_names?.['zh'] || data[0].local_names?.['zh-tw'] || "";
+                    return (zhName && enName !== zhName) ? `${enName} / ${zhName}` : enName || fallback;
                 }
             } catch (e) {}
-            return fallbackName;
+            return fallback;
         }
 
-        async function getCityZHName(cityName) {
+        async function getCityBilingual(cityName) {
             try {
                 const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`;
                 const res = await fetch(geoUrl);
                 const data = await res.json();
                 if (data && data[0]) {
-                    return data[0].local_names?.['zh'] || data[0].name;
+                    const zh = data[0].local_names?.['zh'] || "";
+                    return zh ? `${cityName} / ${zh}` : cityName;
                 }
             } catch (e) {}
             return cityName;
         }
 
         function toggleTheme() {
-            const body = document.body;
-            const isLight = !body.classList.contains('light-mode');
-            body.classList.toggle('light-mode', isLight);
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
             document.getElementById('theme-btn').innerHTML = isLight ? '<i class="fa-solid fa-sun text-orange-500"></i>' : '<i class="fa-solid fa-moon text-sky-300"></i>';
         }
 
@@ -158,66 +144,50 @@
 
         async function fetchAllWeather() {
             const container = document.getElementById('weather-content');
-            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在精確解析地理座標...</div>`;
+            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">Syncing Geo-Data...</div>`;
             
             navigator.geolocation.getCurrentPosition(async p => {
                 const lat = p.coords.latitude;
                 const lon = p.coords.longitude;
                 
-                // 當前定位地名自動抓取中文
-                const currentZH = await getAutoZHName(lat, lon);
+                const currentName = await getBilingualName(lat, lon, "定位中");
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${lat}&lon=${lon}&lang=zh_tw`);
                 const d = await res.json();
                 
-                let html = generateWeatherCard(currentZH || d.name, d, true);
+                // 動態判斷國家名稱
+                const countryZH = countryNames[d.sys.country] || d.sys.country;
+                const localLabel = `${countryZH}天氣`;
+
+                let html = generateWeatherCard(currentName, d, localLabel, true);
                 
-                // 日本預設城市也自動抓取中文
                 const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
                 for(let city of cities) {
-                    try {
-                        const zhCity = await getCityZHName(city);
-                        const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
-                        const dc = await resC.json();
-                        html += generateWeatherCard(zhCity, dc);
-                    } catch(e){}
+                    const zhCity = await getCityBilingual(city);
+                    const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
+                    const dc = await resC.json();
+                    html += generateWeatherCard(zhCity, dc, "日本天氣", false);
                 }
                 container.innerHTML = html;
-                updateLockWeather(currentZH || d.name, d); 
-            }, () => { container.innerHTML = "請開啟 GPS 權限獲取鄉鎮級定位。"; });
+                document.getElementById('lock-city').innerText = currentName;
+                document.getElementById('lock-w-desc').innerText = d.weather[0].description + " " + Math.round(d.main.temp) + "°C";
+            }, () => { container.innerHTML = "GPS Access Denied."; });
         }
 
-        function generateWeatherCard(title, d, isMain = false) {
-            const windDir = (deg) => {
-                const arr = ["北","東北","東","東南","南","西南","西","西北"];
-                return arr[Math.round(deg / 45) % 8];
-            };
+        function generateWeatherCard(title, d, label, isMain = false) {
             return `
             <div class="card-frosted p-6 ${isMain ? 'border-l-4 border-sky-500' : ''}">
                 <div class="flex justify-between items-start">
                     <div>
-                        <span class="text-[10px] font-black bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded">${isMain ? '本地座標' : '衛星導航'}</span>
-                        <p class="text-2xl font-black mt-1">${title}</p>
+                        <span class="text-[9px] font-black bg-white/10 text-white/60 px-2 py-0.5 rounded uppercase tracking-tighter">${label}</span>
+                        <p class="text-lg font-black mt-1 leading-tight">${title}</p>
                     </div>
-                    <div class="text-4xl">${getWeatherIcon(d.weather[0].icon)}</div>
+                    <div class="text-3xl">${getWeatherIcon(d.weather[0].icon)}</div>
                 </div>
-                <div class="flex items-end gap-2 mt-2">
+                <div class="flex items-end gap-2 mt-4">
                     <span class="text-4xl font-black">${Math.round(d.main.temp)}°</span>
                     <span class="text-xs font-bold opacity-40 mb-1">${d.weather[0].description}</span>
                 </div>
-                <div class="grid grid-cols-3 gap-2 mt-5">
-                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">風向</p><p class="text-xs font-black">${windDir(d.wind.deg)}</p></div>
-                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">濕度</p><p class="text-xs font-black">${d.main.humidity}%</p></div>
-                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">氣壓</p><p class="text-xs font-black">${d.main.pressure}</p></div>
-                </div>
             </div>`;
-        }
-
-        function updateLockWeather(cityName, d) {
-            document.getElementById('lock-city').innerText = cityName;
-            document.getElementById('lock-w-desc').innerText = d.weather[0].description;
-            document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°C';
-            document.getElementById('lock-w-pop').innerText = d.main.humidity + '%';
-            document.getElementById('lock-w-icon-box').innerHTML = getWeatherIcon(d.weather[0].icon);
         }
 
         function getWeatherIcon(code) {
