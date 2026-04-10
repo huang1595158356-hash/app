@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JP Tech v3.5</title>
+    <title>JP Tech v3.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -55,7 +55,6 @@
             margin-bottom: 20px;
         }
 
-        /* 鎖定介面：科技感非對稱排版 */
         #lock-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; 
             background: rgba(0,0,0,0.7); display: none; flex-direction: column; 
@@ -64,9 +63,6 @@
         #lock-screen.active { display: flex; }
 
         .vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
-
-        /* 天氣數據小標籤 */
-        .w-badge { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
     </style>
 </head>
 <body class="dark-mode">
@@ -88,14 +84,14 @@
             <div class="card-frosted p-8 border-l-4 border-sky-500">
                 <div class="flex justify-between items-end">
                     <div>
-                        <p id="lock-city" class="text-xs font-black opacity-40 mb-1 uppercase tracking-widest">--</p>
+                        <p id="lock-city" class="text-xs font-black opacity-40 mb-1 uppercase tracking-widest italic">--</p>
                         <p id="lock-w-desc" class="text-2xl font-black text-white">等待同步...</p>
                     </div>
                     <div id="lock-w-icon-box" class="text-5xl mb-1"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3 mt-6 border-t border-white/5 pt-4">
                     <div class="text-[11px] text-white/50 font-bold">溫度: <span id="lock-w-temp" class="text-white">--</span></div>
-                    <div class="text-[11px] text-white/50 font-bold">降雨: <span id="lock-w-pop" class="text-white">--</span></div>
+                    <div class="text-[11px] text-white/50 font-bold">降雨機率: <span id="lock-w-pop" class="text-white">--</span></div>
                 </div>
             </div>
             <p class="text-center text-[10px] font-black opacity-30 mt-6 tracking-[0.5em] uppercase">Click to Unlock</p>
@@ -139,10 +135,10 @@
 
         <div id="weather-page" class="page">
             <header class="p-8 pt-14 flex justify-between items-center">
-                <h2 class="text-2xl font-black italic tracking-widest">WEATHER</h2>
+                <h2 class="text-2xl font-black italic tracking-widest text-sky-500">WEATHER</h2>
                 <button onclick="fetchAllWeather()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:rotate-180 transition-transform"><i class="fa-solid fa-sync-alt"></i></button>
             </header>
-            <div id="weather-content" class="px-6 pb-20 space-y-4"></div>
+            <div id="weather-content" class="px-6 pb-24 space-y-4"></div>
         </div>
     </div>
 
@@ -156,8 +152,6 @@
     <script>
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
-
-        // 強制繁中對照表 (針對部分 API 回傳不完全的部分)
         const cityMap = { 'Tokyo': '東京', 'Osaka': '大阪', 'Kyoto': '京都', 'Fukuoka': '福岡', 'Sapporo': '札幌' };
 
         function applyBg(src) { 
@@ -182,7 +176,6 @@
 
         const savedBg = localStorage.getItem('user_bg_img');
         if (savedBg) document.documentElement.style.setProperty('--bg-img', `url(${savedBg})`);
-        if (localStorage.getItem('theme') === 'light') toggleTheme();
 
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -196,15 +189,15 @@
             const container = document.getElementById('weather-content');
             container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在存取衛星數據...</div>`;
             
-            const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
-            let html = '';
-            
-            // 獲取 GPS 位置作為首選
             navigator.geolocation.getCurrentPosition(async p => {
                 const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${p.coords.latitude}&lon=${p.coords.longitude}&lang=zh_tw`);
                 const d = await res.json();
-                html += generateWeatherCard('我的位置', d, true);
                 
+                // 強制將 GPS 取得的地名應用到天氣卡片與鎖定畫面
+                let localName = d.name; 
+                let html = generateWeatherCard(localName, d, true);
+                
+                const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
                 for(let city of cities) {
                     try {
                         const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
@@ -213,22 +206,20 @@
                     } catch(e){}
                 }
                 container.innerHTML = html;
-                updateLockWeather(d); // 更新鎖定畫面
+                updateLockWeather(localName, d); 
             }, () => { container.innerHTML = "請開啟 GPS 權限以獲取天氣"; });
         }
 
         function generateWeatherCard(title, d, isMain = false) {
-            // 計算風向文字
             const windDir = (deg) => {
                 const arr = ["北","東北","東","東南","南","西南","西","西北"];
                 return arr[Math.round(deg / 45) % 8];
             };
-            
             return `
             <div class="card-frosted p-6 ${isMain ? 'border-l-4 border-sky-500' : ''}">
                 <div class="flex justify-between items-start">
                     <div>
-                        <span class="text-[10px] font-black bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded">${isMain ? 'LIVE' : 'JAPAN'}</span>
+                        <span class="text-[10px] font-black bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded">${isMain ? '當前定位' : '日本地區'}</span>
                         <p class="text-2xl font-black mt-1">${title}</p>
                     </div>
                     <div class="text-4xl">${getWeatherIcon(d.weather[0].icon)}</div>
@@ -238,24 +229,15 @@
                     <span class="text-xs font-bold opacity-40 mb-1">${d.weather[0].description}</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2 mt-5">
-                    <div class="bg-white/5 p-3 rounded-xl">
-                        <p class="text-[9px] font-black opacity-30 mb-1">風向</p>
-                        <p class="text-xs font-black">${windDir(d.wind.deg)}風</p>
-                    </div>
-                    <div class="bg-white/5 p-3 rounded-xl">
-                        <p class="text-[9px] font-black opacity-30 mb-1">濕度</p>
-                        <p class="text-xs font-black">${d.main.humidity}%</p>
-                    </div>
-                    <div class="bg-white/5 p-3 rounded-xl">
-                        <p class="text-[9px] font-black opacity-30 mb-1">降雨機率</p>
-                        <p class="text-xs font-black">${d.clouds.all}%</p>
-                    </div>
+                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">風向</p><p class="text-xs font-black">${windDir(d.wind.deg)}風</p></div>
+                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">濕度</p><p class="text-xs font-black">${d.main.humidity}%</p></div>
+                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">雲量</p><p class="text-xs font-black">${d.clouds.all}%</p></div>
                 </div>
             </div>`;
         }
 
-        function updateLockWeather(d) {
-            document.getElementById('lock-city').innerText = d.name;
+        function updateLockWeather(cityName, d) {
+            document.getElementById('lock-city').innerText = cityName;
             document.getElementById('lock-w-desc').innerText = d.weather[0].description;
             document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°C';
             document.getElementById('lock-w-pop').innerText = d.clouds.all + '%';
