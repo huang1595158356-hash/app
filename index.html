@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>日本自助助手</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 font-sans mb-20">
+
+    <nav class="bg-red-600 text-white p-4 shadow-lg sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-center italic">🇯🇵 Japan Travel Go</h1>
+    </nav>
+
+    <main class="p-4 space-y-4">
+        
+        <section class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200">
+            <h2 class="text-gray-500 text-sm font-bold mb-3 uppercase tracking-wider"><i class="fa-solid fa-coins mr-2"></i>即時換算 (JPY ⮕ TWD)</h2>
+            <div class="space-y-4">
+                <div>
+                    <input type="number" id="jpyInput" pattern="\d*" inputmode="decimal" 
+                           class="w-full text-3xl font-semibold border-b-2 border-slate-100 focus:border-red-500 outline-none py-2" 
+                           placeholder="日幣 ¥">
+                </div>
+                <div class="flex items-center justify-between text-2xl text-slate-400">
+                    <i class="fa-solid fa-arrow-down-long ml-4"></i>
+                    <span class="text-sm bg-slate-100 px-2 py-1 rounded">匯率預設: 0.21</span>
+                </div>
+                <div class="text-4xl font-bold text-red-600">
+                    <span class="text-lg">NT$</span> <span id="twdOutput">0</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-2 gap-3">
+            <a href="https://www.jorudan.co.jp/" target="_blank" class="flex flex-col items-center justify-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200 active:scale-95 transition">
+                <i class="fa-solid fa-train-subway text-orange-500 text-2xl mb-2"></i>
+                <span class="text-sm font-medium">乘換案內</span>
+            </a>
+            <a href="https://www.google.com/maps" target="_blank" class="flex flex-col items-center justify-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200 active:scale-95 transition">
+                <i class="fa-solid fa-map-location-dot text-blue-500 text-2xl mb-2"></i>
+                <span class="text-sm font-medium">Google 地圖</span>
+            </a>
+            <a href="https://translate.google.com/" target="_blank" class="flex flex-col items-center justify-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200 active:scale-95 transition">
+                <i class="fa-solid fa-language text-green-500 text-2xl mb-2"></i>
+                <span class="text-sm font-medium">即時翻譯</span>
+            </a>
+            <button onclick="window.print()" class="flex flex-col items-center justify-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200 active:scale-95 transition">
+                <i class="fa-solid fa-qrcode text-purple-500 text-2xl mb-2"></i>
+                <span class="text-sm font-medium">出示文件</span>
+            </button>
+        </section>
+
+    </main>
+
+    <script>
+        // 簡易匯率邏輯 (可自行替換 API)
+        const RATE = 0.211; 
+        const jpyInput = document.getElementById('jpyInput');
+        const twdOutput = document.getElementById('twdOutput');
+
+        jpyInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            twdOutput.innerText = val ? Math.round(val * RATE).toLocaleString() : '0';
+        });
+
+        // 註冊 Service Worker 達成離線使用
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
