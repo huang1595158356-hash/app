@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JP Tech v3.9 - 精準定位版</title>
+    <title>JP Tech v4.5 - 全自動地理中文化</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -14,54 +14,16 @@
             --glass-blur: 45px; 
             --base-bg: #050505;
         }
-        
-        body.light-mode {
-            --text-color: #1a1a1a;
-            --card-bg: rgba(245, 245, 245, 0.75);
-            --tab-bg: rgba(255, 255, 255, 0.98);
-            --base-bg: #f0f2f5;
-        }
-
-        body, html { 
-            height: 100%; margin: 0; overflow: hidden; background: var(--base-bg); max-width: 500px; margin: 0 auto; 
-            color: var(--text-color); 
-            font-family: "Inter", "PingFang TC", "Microsoft JhengHei", sans-serif;
-            transition: background 0.5s ease;
-        }
-
-        .bg-layer { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--base-bg); background-image: var(--bg-img); 
-            background-size: cover; background-position: center; 
-            z-index: 1; transition: filter 0.5s ease;
-        }
-
+        body.light-mode { --text-color: #1a1a1a; --card-bg: rgba(245, 245, 245, 0.75); --tab-bg: rgba(255, 255, 255, 0.98); --base-bg: #f0f2f5; }
+        body, html { height: 100%; margin: 0; overflow: hidden; background: var(--base-bg); max-width: 500px; margin: 0 auto; color: var(--text-color); font-family: "Inter", "PingFang TC", "Microsoft JhengHei", sans-serif; transition: background 0.5s ease; }
+        .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--base-bg); background-image: var(--bg-img); background-size: cover; background-position: center; z-index: 1; transition: filter 0.5s ease; }
         .content-layer { position: relative; width: 100%; height: 100%; z-index: 2; overflow: hidden; }
-        
-        .page { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            display: none; flex-direction: column; overflow-y: auto; 
-            padding-top: env(safe-area-inset-top); padding-bottom: 140px;
-        }
+        .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; overflow-y: auto; padding-top: env(safe-area-inset-top); padding-bottom: 140px; }
         .page.active { display: flex; animation: pageFade 0.4s ease-out; }
         @keyframes pageFade { from { opacity: 0; filter: blur(10px); } to { opacity: 1; filter: blur(0); } }
-
-        .card-frosted { 
-            background: var(--card-bg) !important;
-            backdrop-filter: blur(var(--glass-blur)) saturate(110%) brightness(105%) !important;
-            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(110%) brightness(105%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 28px;
-            margin-bottom: 20px;
-        }
-
-        #lock-screen { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; 
-            background: rgba(0,0,0,0.7); display: none; flex-direction: column; 
-            padding: 80px 40px; backdrop-filter: blur(80px) brightness(60%); -webkit-backdrop-filter: blur(80px);
-        }
+        .card-frosted { background: var(--card-bg) !important; backdrop-filter: blur(var(--glass-blur)) saturate(110%) brightness(105%) !important; -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(110%) brightness(105%) !important; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 28px; margin-bottom: 20px; }
+        #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: rgba(0,0,0,0.7); display: none; flex-direction: column; padding: 80px 40px; backdrop-filter: blur(80px) brightness(60%); -webkit-backdrop-filter: blur(80px); }
         #lock-screen.active { display: flex; }
-
         .vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
     </style>
 </head>
@@ -77,21 +39,21 @@
                     <p id="lock-date" class="text-lg font-bold text-white/60">日期載入中</p>
                 </div>
             </div>
-            <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase italic">Precise Geo-Sync</div>
+            <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase italic">Global Geo-Intelligence</div>
         </div>
 
         <div class="mt-auto w-full">
             <div class="card-frosted p-8 border-l-4 border-sky-500">
                 <div class="flex justify-between items-end">
                     <div>
-                        <p id="lock-city" class="text-xs font-black opacity-40 mb-1 uppercase tracking-widest italic">正在鎖定座標...</p>
-                        <p id="lock-w-desc" class="text-2xl font-black text-white">等待同步...</p>
+                        <p id="lock-city" class="text-xs font-black opacity-40 mb-1 uppercase tracking-widest italic">定位中...</p>
+                        <p id="lock-w-desc" class="text-2xl font-black text-white">同步數據...</p>
                     </div>
                     <div id="lock-w-icon-box" class="text-5xl mb-1"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3 mt-6 border-t border-white/5 pt-4">
                     <div class="text-[11px] text-white/50 font-bold">溫度: <span id="lock-w-temp" class="text-white">--</span></div>
-                    <div class="text-[11px] text-white/50 font-bold">降雨機率: <span id="lock-w-pop" class="text-white">--</span></div>
+                    <div class="text-[11px] text-white/50 font-bold">濕度: <span id="lock-w-pop" class="text-white">--</span></div>
                 </div>
             </div>
             <p class="text-center text-[10px] font-black opacity-30 mt-6 tracking-[0.5em] uppercase">Click to Unlock</p>
@@ -153,33 +115,30 @@
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
 
-        // 全面性的翻譯地圖 (備援機制)
-        const geoTranslation = {
-            'Kaohsiung': '高雄', 'Taipei': '台北', 'New Taipei City': '新北', 'Taichung': '台中', 
-            'Tainan': '台南', 'Taoyuan': '桃園', 'Hsinchu': '新竹', 'Keelung': '基隆', 
-            'Chiayi': '嘉義', 'Changhua': '彰化', 'Pingtung': '屏東', 'Pingtung City': '屏東市',
-            'Chaozhou Township': '潮州', 'Chaozhou': '潮州', 'Tokyo': '東京', 'Osaka': '大阪'
-        };
-
-        // 新增：高精確度地名獲取函式
-        async function getPreciseLocationName(lat, lon) {
+        // 全自動地名解析函式：支持全球任何鄉鎮
+        async function getAutoZHName(lat, lon, fallbackName = "") {
             try {
-                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
+                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=5&appid=${API_KEY}`;
                 const res = await fetch(geoUrl);
                 const data = await res.json();
                 if (data && data[0]) {
-                    // 優先使用繁體中文地名
-                    const name = data[0].local_names?.zh || data[0].name;
-                    return geoTranslation[name] || name;
+                    // 優先權：繁中 > 簡中 > 英文 > API回傳名稱
+                    return data[0].local_names?.['zh'] || data[0].local_names?.['zh-tw'] || data[0].name;
                 }
-            } catch (e) { console.error("Geo Error", e); }
-            return null;
+            } catch (e) {}
+            return fallbackName;
         }
 
-        function applyBg(src) { 
-            document.documentElement.style.setProperty('--bg-img', `url(${src})`);
-            document.body.classList.remove('light-mode');
-            localStorage.setItem('theme', 'dark'); 
+        async function getCityZHName(cityName) {
+            try {
+                const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`;
+                const res = await fetch(geoUrl);
+                const data = await res.json();
+                if (data && data[0]) {
+                    return data[0].local_names?.['zh'] || data[0].name;
+                }
+            } catch (e) {}
+            return cityName;
         }
 
         function toggleTheme() {
@@ -187,17 +146,7 @@
             const isLight = !body.classList.contains('light-mode');
             body.classList.toggle('light-mode', isLight);
             document.getElementById('theme-btn').innerHTML = isLight ? '<i class="fa-solid fa-sun text-orange-500"></i>' : '<i class="fa-solid fa-moon text-sky-300"></i>';
-            localStorage.setItem('theme', isLight ? 'light' : 'dark');
         }
-
-        document.getElementById('bg-upload').addEventListener('change', e => {
-            const reader = new FileReader();
-            reader.onload = ev => { applyBg(ev.target.result); localStorage.setItem('user_bg_img', ev.target.result); };
-            reader.readAsDataURL(e.target.files[0]);
-        });
-
-        const savedBg = localStorage.getItem('user_bg_img');
-        if (savedBg) document.documentElement.style.setProperty('--bg-img', `url(${savedBg})`);
 
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -209,33 +158,31 @@
 
         async function fetchAllWeather() {
             const container = document.getElementById('weather-content');
-            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在精確定位鄉鎮級座標...</div>`;
+            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在精確解析地理座標...</div>`;
             
             navigator.geolocation.getCurrentPosition(async p => {
-                try {
-                    const lat = p.coords.latitude;
-                    const lon = p.coords.longitude;
-                    
-                    // 核心修正：先獲取精確地名
-                    const preciseName = await getPreciseLocationName(lat, lon);
-                    
-                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${lat}&lon=${lon}&lang=zh_tw`);
-                    const d = await res.json();
-                    
-                    const finalName = preciseName || d.name; // 優先使用座標解析的地名
-                    let html = generateWeatherCard(finalName, d, true);
-                    
-                    const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
-                    for(let city of cities) {
-                        try {
-                            const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
-                            const dc = await resC.json();
-                            html += generateWeatherCard(geoTranslation[city] || city, dc);
-                        } catch(e){}
-                    }
-                    container.innerHTML = html;
-                    updateLockWeather(finalName, d); 
-                } catch(e) { container.innerHTML = "數據加載失敗。"; }
+                const lat = p.coords.latitude;
+                const lon = p.coords.longitude;
+                
+                // 當前定位地名自動抓取中文
+                const currentZH = await getAutoZHName(lat, lon);
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${lat}&lon=${lon}&lang=zh_tw`);
+                const d = await res.json();
+                
+                let html = generateWeatherCard(currentZH || d.name, d, true);
+                
+                // 日本預設城市也自動抓取中文
+                const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
+                for(let city of cities) {
+                    try {
+                        const zhCity = await getCityZHName(city);
+                        const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
+                        const dc = await resC.json();
+                        html += generateWeatherCard(zhCity, dc);
+                    } catch(e){}
+                }
+                container.innerHTML = html;
+                updateLockWeather(currentZH || d.name, d); 
             }, () => { container.innerHTML = "請開啟 GPS 權限獲取鄉鎮級定位。"; });
         }
 
@@ -248,7 +195,7 @@
             <div class="card-frosted p-6 ${isMain ? 'border-l-4 border-sky-500' : ''}">
                 <div class="flex justify-between items-start">
                     <div>
-                        <span class="text-[10px] font-black bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded">${isMain ? '精準定位' : '日本地區'}</span>
+                        <span class="text-[10px] font-black bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded">${isMain ? '本地座標' : '衛星導航'}</span>
                         <p class="text-2xl font-black mt-1">${title}</p>
                     </div>
                     <div class="text-4xl">${getWeatherIcon(d.weather[0].icon)}</div>
@@ -258,9 +205,9 @@
                     <span class="text-xs font-bold opacity-40 mb-1">${d.weather[0].description}</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2 mt-5">
-                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">風向</p><p class="text-xs font-black">${windDir(d.wind.deg)}風</p></div>
+                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">風向</p><p class="text-xs font-black">${windDir(d.wind.deg)}</p></div>
                     <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">濕度</p><p class="text-xs font-black">${d.main.humidity}%</p></div>
-                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">雲量</p><p class="text-xs font-black">${d.clouds.all}%</p></div>
+                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[9px] font-black opacity-30 mb-1">氣壓</p><p class="text-xs font-black">${d.main.pressure}</p></div>
                 </div>
             </div>`;
         }
@@ -269,7 +216,7 @@
             document.getElementById('lock-city').innerText = cityName;
             document.getElementById('lock-w-desc').innerText = d.weather[0].description;
             document.getElementById('lock-w-temp').innerText = Math.round(d.main.temp) + '°C';
-            document.getElementById('lock-w-pop').innerText = d.clouds.all + '%';
+            document.getElementById('lock-w-pop').innerText = d.main.humidity + '%';
             document.getElementById('lock-w-icon-box').innerHTML = getWeatherIcon(d.weather[0].icon);
         }
 
