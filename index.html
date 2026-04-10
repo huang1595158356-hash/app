@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JP Tech v3.7</title>
+    <title>JP Tech v3.9 - 精準定位版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -77,14 +77,14 @@
                     <p id="lock-date" class="text-lg font-bold text-white/60">日期載入中</p>
                 </div>
             </div>
-            <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase">Secure Mode / Accessing</div>
+            <div class="vertical-text text-white/20 font-black tracking-widest text-sm uppercase italic">Precise Geo-Sync</div>
         </div>
 
         <div class="mt-auto w-full">
             <div class="card-frosted p-8 border-l-4 border-sky-500">
                 <div class="flex justify-between items-end">
                     <div>
-                        <p id="lock-city" class="text-xs font-black opacity-40 mb-1 uppercase tracking-widest italic">--</p>
+                        <p id="lock-city" class="text-xs font-black opacity-40 mb-1 uppercase tracking-widest italic">正在鎖定座標...</p>
                         <p id="lock-w-desc" class="text-2xl font-black text-white">等待同步...</p>
                     </div>
                     <div id="lock-w-icon-box" class="text-5xl mb-1"></div>
@@ -119,7 +119,7 @@
                     <div class="mt-8 text-5xl font-black text-sky-500">¥ <span id="jpy-output">0</span></div>
                     <p id="rate-info" class="text-[10px] opacity-40 mt-5 font-bold uppercase"></p>
                 </section>
-
+                
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <a href="https://www.jorudan.co.jp/" target="_blank" class="card-frosted p-8 flex flex-col items-center group">
                         <i class="fa-solid fa-route text-orange-400 text-2xl mb-3"></i>
@@ -153,15 +153,27 @@
         const API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
 
-        // 擴充繁中對照表，解決部分 API 英文問題
+        // 全面性的翻譯地圖 (備援機制)
         const geoTranslation = {
-            'Tokyo': '東京', 'Osaka': '大阪', 'Kyoto': '京都', 'Fukuoka': '福岡', 'Sapporo': '札幌',
-            'Chaozhou': '潮州', 'Pingtung': '屏東', 'Chaozhou Township': '潮州鎮', 'Taipei': '台北',
-            'New Taipei City': '新北', 'Kaohsiung': '高雄', 'Taichung': '台中', 'Tainan': '台南'
+            'Kaohsiung': '高雄', 'Taipei': '台北', 'New Taipei City': '新北', 'Taichung': '台中', 
+            'Tainan': '台南', 'Taoyuan': '桃園', 'Hsinchu': '新竹', 'Keelung': '基隆', 
+            'Chiayi': '嘉義', 'Changhua': '彰化', 'Pingtung': '屏東', 'Pingtung City': '屏東市',
+            'Chaozhou Township': '潮州', 'Chaozhou': '潮州', 'Tokyo': '東京', 'Osaka': '大阪'
         };
 
-        function translateName(name) {
-            return geoTranslation[name] || name;
+        // 新增：高精確度地名獲取函式
+        async function getPreciseLocationName(lat, lon) {
+            try {
+                const geoUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
+                const res = await fetch(geoUrl);
+                const data = await res.json();
+                if (data && data[0]) {
+                    // 優先使用繁體中文地名
+                    const name = data[0].local_names?.zh || data[0].name;
+                    return geoTranslation[name] || name;
+                }
+            } catch (e) { console.error("Geo Error", e); }
+            return null;
         }
 
         function applyBg(src) { 
@@ -197,27 +209,34 @@
 
         async function fetchAllWeather() {
             const container = document.getElementById('weather-content');
-            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在存取衛星數據...</div>`;
+            container.innerHTML = `<div class="p-4 opacity-40 text-xs font-black italic animate-pulse">正在精確定位鄉鎮級座標...</div>`;
             
             navigator.geolocation.getCurrentPosition(async p => {
-                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${p.coords.latitude}&lon=${p.coords.longitude}&lang=zh_tw`);
-                const d = await res.json();
-                
-                // 套用翻譯邏輯
-                let localName = translateName(d.name); 
-                let html = generateWeatherCard(localName, d, true);
-                
-                const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
-                for(let city of cities) {
-                    try {
-                        const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
-                        const dc = await resC.json();
-                        html += generateWeatherCard(translateName(city), dc);
-                    } catch(e){}
-                }
-                container.innerHTML = html;
-                updateLockWeather(localName, d); 
-            }, () => { container.innerHTML = "請開啟 GPS 權限或確認瀏覽器設定"; });
+                try {
+                    const lat = p.coords.latitude;
+                    const lon = p.coords.longitude;
+                    
+                    // 核心修正：先獲取精確地名
+                    const preciseName = await getPreciseLocationName(lat, lon);
+                    
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?units=metric&appid=${API_KEY}&lat=${lat}&lon=${lon}&lang=zh_tw`);
+                    const d = await res.json();
+                    
+                    const finalName = preciseName || d.name; // 優先使用座標解析的地名
+                    let html = generateWeatherCard(finalName, d, true);
+                    
+                    const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Fukuoka', 'Sapporo'];
+                    for(let city of cities) {
+                        try {
+                            const resC = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=zh_tw`);
+                            const dc = await resC.json();
+                            html += generateWeatherCard(geoTranslation[city] || city, dc);
+                        } catch(e){}
+                    }
+                    container.innerHTML = html;
+                    updateLockWeather(finalName, d); 
+                } catch(e) { container.innerHTML = "數據加載失敗。"; }
+            }, () => { container.innerHTML = "請開啟 GPS 權限獲取鄉鎮級定位。"; });
         }
 
         function generateWeatherCard(title, d, isMain = false) {
@@ -229,7 +248,7 @@
             <div class="card-frosted p-6 ${isMain ? 'border-l-4 border-sky-500' : ''}">
                 <div class="flex justify-between items-start">
                     <div>
-                        <span class="text-[10px] font-black bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded">${isMain ? '當前定位' : '日本地區'}</span>
+                        <span class="text-[10px] font-black bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded">${isMain ? '精準定位' : '日本地區'}</span>
                         <p class="text-2xl font-black mt-1">${title}</p>
                     </div>
                     <div class="text-4xl">${getWeatherIcon(d.weather[0].icon)}</div>
@@ -267,8 +286,10 @@
         }
 
         async function updateRate() {
-            const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json();
-            currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `1 TWD = ${currentRate.toFixed(2)} JPY`;
+            try {
+                const r = await fetch('https://open.er-api.com/v6/latest/TWD'); const d = await r.json();
+                currentRate = d.rates.JPY; document.getElementById('rate-info').innerText = `1 TWD = ${currentRate.toFixed(2)} JPY`;
+            } catch(e) { }
         }
         document.getElementById('twd-input').oninput = e => { document.getElementById('jpy-output').innerText = e.target.value ? Math.round(e.target.value * currentRate).toLocaleString() : '0'; };
         function toggleLockScreen() { document.getElementById('lock-screen').classList.toggle('active'); updateTime(); }
