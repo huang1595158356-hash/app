@@ -11,10 +11,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="實用工具">
+    <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2554/2554282.png">
     
-    <!-- Web App Manifest (透過 Data URI 簡化，無需額外檔案) -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJnameIjogIuWmrueUqOWKn+iDvSIsCiAgInNob3J0X25hbWUiIjogIuWmrueUqOWKn+iDvSIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDAwMDAwIiwKICAidGhlbWVfY29sb3IiIjogIiMwMDAwMDAiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGljb24uY29tLzUxMi8yNTU0LzI1NTQyODIucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
+    <!-- Web App Manifest (修正後的 Data URI) -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJpZCI6ICIvIiwKICAic2NvcGUiOiAiLiIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAibmFtZSI6ICLlrp7nlKjlip9vbiIsCiAgInNob3J0X25hbWUiOiAi5aun55So5YqnIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAidGhlbWVfY29sb3IiOiAiIzAwMDAwMCIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzAwMDAwMCIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zL3BuZy81MTIvMjU1NC8yNTU0MjgyLnBuZyIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIgogICAgfQogIF0KfQ==">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -240,6 +241,19 @@
     </div>
 
     <script>
+        // Service Worker 註冊 (為了讓手機瀏覽器識別為可安裝的 PWA)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
+                `;
+                const blob = new Blob([swCode], { type: 'text/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).catch(() => {});
+            });
+        }
+
         const WEATHER_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
         let currentRate = 4.75;
         let currentTaxRate = 0.1;
