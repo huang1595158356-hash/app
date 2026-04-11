@@ -3,503 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>旅遊助手 - 旗艦版</title>
+    <title>實用功能 - 極簡黑版</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { 
             --bg-img: none; 
             --text-color: #ffffff; 
-            --card-bg: rgba(255, 255, 255, 0.12); 
-            --tab-bg: rgba(15, 15, 15, 0.85); 
+            --card-bg: rgba(255, 255, 255, 0.08); 
+            --card-border: rgba(255, 255, 255, 0.12);
+            --tab-bg: rgba(20, 20, 20, 0.85); 
             --accent: #0ea5e9;
-            --border-color: rgba(255, 255, 255, 0.18);
-            --gemini-gradient: linear-gradient(135deg, #4285f4 0%, #9b72cb 50%, #d96570 100%);
-        }
-        
-        body.light-mode { 
-            --text-color: #1a1a1a; 
-            --card-bg: rgba(255, 255, 255, 0.5); 
-            --tab-bg: rgba(255, 255, 255, 0.9); 
-            --accent: #0284c7; 
-            --border-color: rgba(0, 0, 0, 0.1);
         }
         
         body, html { 
             height: 100%; margin: 0; background: #000; max-width: 500px; margin: 0 auto; 
-            color: var(--text-color); font-family: "SF Pro Display", "PingFang TC", sans-serif; 
-            transition: background 0.3s ease; overflow: hidden;
+            color: var(--text-color); font-family: -apple-system, "SF Pro Display", "PingFang TC", sans-serif; 
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
         
-        body.light-mode { background: #f0f2f5; }
-
         .bg-layer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-image: var(--bg-img); background-size: cover; background-position: center; 
-            z-index: 1; filter: brightness(0.7); transition: 0.6s ease;
+            z-index: 1; filter: brightness(0.6); transition: 0.6s ease;
         }
-        body.light-mode .bg-layer { filter: brightness(1.05); }
 
         .content-layer { position: relative; width: 100%; height: 100%; z-index: 10; display: flex; flex-direction: column; }
         
         .page { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: none; flex-direction: column; overflow-y: auto; 
-            padding-top: env(safe-area-inset-top); padding-bottom: 160px;
+            padding-top: env(safe-area-inset-top); 
+            padding-bottom: 110px;
         }
-        .page.active { display: flex; animation: pageFadeIn 0.4s ease-out; }
+        .page.active { display: flex; animation: pageFadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
         
-        @keyframes pageFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pageFadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
-        .card-frosted { 
-            background: var(--card-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--border-color); border-radius: 28px; margin-bottom: 18px;
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2); transition: transform 0.2s;
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+            cursor: pointer;
         }
-        
-        .motion-card { opacity: 0; transform: translateY(20px); transition: 0.5s ease-out; }
+        .glass-card:active { transform: scale(0.98); }
+
+        .local-weather-card {
+            border: 2px solid var(--accent);
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(14, 165, 233, 0.05));
+        }
+
+        .motion-card { opacity: 0; transform: translateY(15px); transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         .motion-card.is-visible { opacity: 1; transform: translateY(0); }
 
-        .tab-bar-container { position: fixed; bottom: 30px; left: 0; right: 0; display: flex; justify-content: center; z-index: 100; padding: 0 20px; }
-        .tab-bar { 
-            background: var(--tab-bg); backdrop-filter: blur(20px); border: 1px solid var(--border-color); 
-            border-radius: 35px; display: flex; justify-content: space-around; padding: 8px; width: 100%; max-width: 440px;
-        }
-        .nav-btn { color: var(--text-color); opacity: 0.35; flex: 1; text-align: center; padding: 12px 0; transition: 0.3s; border-radius: 25px; }
-        .nav-btn.active { color: var(--accent); opacity: 1; background: rgba(255,255,255,0.05); }
-
         input { border: none; background: transparent; outline: none; text-align: right; color: var(--text-color); font-weight: 800; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-        .gemini-btn { background: var(--gemini-gradient) !important; border: none !important; }
-
-        .tax-tag { padding: 6px 14px; border-radius: 14px; font-size: 11px; font-weight: 900; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
-        .tax-tag.active { background: #10b981; color: white; border-color: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
         
-        .currency-block { padding: 24px; border-radius: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
-
-        @keyframes sunRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes cloudFloat { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(10px); } }
-        @keyframes rainDrop { 0% { transform: translateY(-5px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(5px); opacity: 0; } }
-        @keyframes snowFlake { 0% { transform: translateY(-5px) rotate(0deg); } 100% { transform: translateY(5px) rotate(360deg); } }
-        
-        .animate-sun { animation: sunRotate 15s linear infinite; display: inline-block; }
-        .animate-cloud { animation: cloudFloat 4s ease-in-out infinite; display: inline-block; }
-        .animate-rain { animation: rainDrop 1.5s infinite linear; display: inline-block; }
-        .animate-snow { animation: snowFlake 3s infinite linear; display: inline-block; }
-
-        .train-input { text-align: left; font-size: 1.25rem; font-weight: 800; width: 100%; }
-        
-        .spot-card { overflow: hidden; position: relative; display: flex; flex-direction: column; }
-        .spot-city-tag { position: absolute; top: 15px; left: 15px; padding: 4px 12px; border-radius: 10px; font-size: 10px; font-weight: 900; color: white; z-index: 2; }
-        
-        .spot-nav-btn { 
-            background: rgba(255,255,255,0.05); 
-            border: 1px solid rgba(255,255,255,0.1);
-            width: 52px; height: 52px; border-radius: 18px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: 0.2s;
+        /* 移除 Chrome, Safari, Edge, Opera 的數字微調按鈕 */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
-        .spot-nav-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.1); }
+        /* 移除 Firefox 的數字微調按鈕 */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .input-group { background: rgba(255,255,255,0.05); padding: 14px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); }
+
+        .tax-tag { padding: 8px 14px; border-radius: 12px; font-size: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); flex: 1; text-align: center; }
+        .tax-tag.active { background: #10b981; color: white; border-color: #10b981; }
+
+        /* 天氣動畫 */
+        @keyframes sun-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes cloud-drift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+        @keyframes fan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .anim-sun { animation: sun-rotate 10s linear infinite; transform-origin: center; }
+        .anim-cloud { animation: cloud-drift 4s ease-in-out infinite; }
+        .anim-fan { animation: fan-rotate 2s linear infinite; display: inline-block; }
+
+        .tab-bar-container { position: fixed; bottom: 24px; left: 0; right: 0; display: flex; justify-content: center; z-index: 100; padding: 0 20px; }
+        .tab-bar { background: var(--tab-bg); backdrop-filter: blur(25px); border: 1px solid var(--card-border); border-radius: 32px; display: flex; justify-content: space-around; padding: 6px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        .nav-btn { color: var(--text-color); opacity: 0.4; flex: 1; text-align: center; padding: 10px 0; transition: 0.2s; border-radius: 26px; cursor: pointer; }
+        .nav-btn.active { color: var(--accent); opacity: 1; background: rgba(255,255,255,0.08); }
         
-        .weather-icon-container { width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; }
-        .weather-icon-container i { font-size: 54px; }
+        .link-chip { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 16px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .link-chip:active { background: rgba(255,255,255,0.15); }
+        .page::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="dark-mode">
+<body>
     <div class="bg-layer" id="main-bg"></div>
 
     <div class="content-layer">
         <!-- 首頁 -->
         <div id="home-page" class="page active px-6">
-            <header class="py-12 flex justify-between items-center motion-card">
-                <h1 class="text-3xl font-black italic tracking-tighter">旅遊助手</h1>
-                <div class="flex items-center space-x-3">
-                    <button onclick="toggleTheme()" class="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center border border-white/15"><i class="fa-solid fa-circle-half-stroke"></i></button>
-                    <label class="text-xs font-black bg-white/10 px-5 py-3 rounded-full border border-white/15 cursor-pointer">更換桌布<input type="file" id="bg-upload" accept="image/*" class="hidden"></label>
+            <header class="py-10 flex justify-between items-center motion-card">
+                <div>
+                    <h1 class="text-2xl font-black italic tracking-tighter">實用功能</h1>
+                </div>
+                <div class="flex gap-2">
+                    <label class="px-4 h-9 rounded-full bg-white/10 flex items-center justify-center cursor-pointer border border-white/10 hover:bg-white/20 transition-all active:scale-95">
+                        <i class="fa-solid fa-image text-xs mr-2"></i>
+                        <span class="text-[10px] font-bold">更換背景圖片</span>
+                        <input type="file" id="bg-upload" class="hidden" accept="image/*">
+                    </label>
                 </div>
             </header>
-            
-            <section class="card-frosted motion-card p-6 mb-6">
-                <p class="text-[10px] font-black tracking-[0.4em] opacity-40 mb-6 uppercase text-center">雙向匯率快速換算</p>
-                <div class="space-y-4">
-                    <div class="currency-block">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="px-3 py-1 bg-sky-400/10 text-sky-400 text-[10px] font-black rounded-lg border border-sky-400/20">TAIWAN</span>
-                            <span class="text-xs font-black opacity-30 italic">TWD</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-2xl font-black text-sky-400">$</span>
-                            <input type="number" id="twd-input" placeholder="輸入台幣" class="text-4xl w-full">
-                        </div>
-                    </div>
-                    <div class="currency-block">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="px-3 py-1 bg-orange-400/10 text-orange-400 text-[10px] font-black rounded-lg border border-orange-400/20">JAPAN</span>
-                            <span class="text-xs font-black opacity-30 italic">JPY</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-2xl font-black text-orange-400">¥</span>
-                            <input type="number" id="jpy-input" placeholder="輸入日圓" class="text-4xl w-full">
-                        </div>
-                    </div>
-                </div>
-            </section>
 
-            <section class="card-frosted motion-card p-6 mb-6">
-                <p class="text-[10px] font-black tracking-[0.4em] opacity-40 mb-6 uppercase text-center">火車時刻查詢</p>
-                <div class="bg-white/5 rounded-2xl p-5 border border-white/5 mb-4">
-                    <div class="flex items-center gap-4">
-                        <div class="flex-1">
-                            <p class="text-[9px] font-black opacity-30 uppercase mb-1">Departure 出發</p>
-                            <input type="text" id="train-from" value="東京" class="train-input text-sky-400">
-                        </div>
-                        <div class="pt-4"><i class="fa-solid fa-right-long opacity-20"></i></div>
-                        <div class="flex-1">
-                            <p class="text-[9px] font-black opacity-30 uppercase mb-1">Arrival 到達</p>
-                            <input type="text" id="train-to" value="大阪" class="train-input text-orange-400">
-                        </div>
+            <!-- 匯率區塊 -->
+            <div class="glass-card motion-card">
+                <div class="flex justify-between items-center mb-5">
+                    <span class="text-[9px] font-black opacity-50 uppercase tracking-widest">即時匯率換算</span>
+                    <span id="rate-display" class="text-[9px] font-bold text-sky-400 bg-sky-400/10 px-2 py-1 rounded">載入中...</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="input-group flex justify-between items-center">
+                        <span class="text-xs font-black opacity-40">台幣 TWD</span>
+                        <div class="flex items-center"><span class="text-lg font-black mr-2">$</span><input type="number" id="twd-input" class="text-xl w-32" placeholder="0"></div>
+                    </div>
+                    <div class="input-group flex justify-between items-center">
+                        <span class="text-xs font-black opacity-40">日圓 JPY</span>
+                        <div class="flex items-center"><span class="text-lg font-black mr-2">¥</span><input type="number" id="jpy-input" class="text-xl w-32" placeholder="0"></div>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-3 mb-4">
-                    <button onclick="searchTrain('shinkansen')" class="bg-white/5 py-3 rounded-xl border border-white/5 text-[10px] font-black hover:bg-white/10 transition-all active:scale-95">新幹線</button>
-                    <button onclick="searchTrain('nex')" class="bg-white/5 py-3 rounded-xl border border-white/5 text-[10px] font-black hover:bg-white/10 transition-all active:scale-95">成田特快</button>
-                    <button onclick="searchTrain('skyliner')" class="bg-white/5 py-3 rounded-xl border border-white/5 text-[10px] font-black hover:bg-white/10 transition-all active:scale-95">Skyliner</button>
-                </div>
-                <button onclick="searchTrain('general')" class="w-full py-4 rounded-2xl bg-sky-500 text-white font-black text-sm shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
-                    <i class="fa-solid fa-magnifying-glass text-xs"></i> 搜尋乘換案內
-                </button>
-            </section>
+            </div>
 
-            <div onclick="window.open('https://gemini.google.com/app', '_blank')" class="card-frosted motion-card gemini-btn p-6 flex items-center cursor-pointer mb-6 active:scale-[0.98] transition-all">
-                <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white mr-4 shadow-lg"><svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" /></svg></div>
-                <div><p class="text-base font-black text-white">Gemini AI</p><p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">旅遊諮詢與翻譯</p></div>
-                <div class="ml-auto bg-white/10 p-2 rounded-full"><i class="fa-solid fa-chevron-right text-xs text-white"></i></div>
+            <!-- 翻譯區塊 -->
+            <div class="glass-card motion-card">
+                <span class="text-[9px] font-black opacity-50 uppercase tracking-widest mb-4 block">語音/文字翻譯</span>
+                <button onclick="window.open('https://translate.google.com/?sl=zh-TW&tl=ja&op=translate')" class="w-full py-3.5 bg-sky-500 text-white rounded-2xl font-black text-xs shadow-xl shadow-sky-500/20 active:scale-95 transition-transform">開啟 Google 翻譯</button>
+            </div>
+
+            <!-- 日本官網跳轉模塊 -->
+            <div class="glass-card motion-card">
+                <span class="text-[9px] font-black opacity-50 uppercase tracking-widest mb-4 block">常用日本官網跳轉</span>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="link-chip" onclick="window.open('https://www.jorudan.co.jp/')"><i class="fa-solid fa-train text-sky-400"></i> 乘換案內</div>
+                    <div class="link-chip" onclick="window.open('https://www.vjw.digital.go.jp/')"><i class="fa-solid fa-passport text-red-400"></i> Visit Japan</div>
+                    <div class="link-chip" onclick="window.open('https://www.tabelog.com/')"><i class="fa-solid fa-utensils text-orange-400"></i> Tabelog</div>
+                    <div class="link-chip" onclick="window.open('https://bigcamera.com/')"><i class="fa-solid fa-camera text-yellow-400"></i> BicCamera</div>
+                </div>
             </div>
         </div>
 
-        <!-- 退稅分頁 -->
+        <!-- 免稅試算頁面 -->
         <div id="tax-page" class="page px-6">
-            <header class="py-12 motion-card">
-                <h2 class="text-3xl font-black italic tracking-tighter text-emerald-400">退稅計算機</h2>
-                <p class="text-[10px] font-black opacity-40 uppercase tracking-widest mt-1">日本免稅即時試算</p>
+            <header class="py-10">
+                <h2 class="text-2xl font-black italic tracking-tighter text-emerald-400">免稅試算</h2>
+                <p class="text-[9px] font-bold opacity-40 uppercase tracking-widest">日本免稅購物計算</p>
             </header>
-
-            <section class="card-frosted motion-card p-8 mb-6">
-                <div class="flex flex-wrap gap-2 mb-8 justify-center">
-                    <div id="tax-10" onclick="setTax(0.1, 'standard')" class="tax-tag active">一般 10%</div>
-                    <div id="tax-8" onclick="setTax(0.08, 'food')" class="tax-tag">藥妝/食品 8%</div>
-                    <div id="tax-elec" onclick="setTax(0.1, 'electronics')" class="tax-tag">電子產品 10%</div>
+            <div class="glass-card text-center">
+                <p class="text-[9px] font-black opacity-50 uppercase tracking-widest mb-3">選擇消費類別 (稅率)</p>
+                <div class="grid grid-cols-2 gap-2 mb-6">
+                    <button id="tax-10" onclick="setTax(0.1, 'tax-10')" class="tax-tag active">服飾/電器 10%</button>
+                    <button id="tax-8" onclick="setTax(0.08, 'tax-8')" class="tax-tag">藥妝/消耗品 8%</button>
+                    <button id="tax-food" onclick="setTax(0.08, 'tax-food')" class="tax-tag">外帶食品 8%</button>
+                    <button id="tax-luxury" onclick="setTax(0.1, 'tax-luxury')" class="tax-tag">奢侈品/飾品 10%</button>
+                </div>
+                
+                <div class="input-group flex justify-between items-center mb-6">
+                    <span class="text-xs font-black opacity-40">標價 (含稅)</span>
+                    <div class="flex items-center"><span class="text-xl font-black mr-2">¥</span><input type="number" id="tax-input" placeholder="0" class="text-2xl w-32 text-emerald-400"></div>
                 </div>
 
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between border-b border-white/10 pb-4">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] font-black opacity-40 uppercase">Total Amount</span>
-                            <span class="text-xs font-black">含稅總額 (¥)</span>
-                        </div>
-                        <input type="number" id="tax-input" placeholder="0" class="text-4xl w-48 text-emerald-400 font-black">
+                <div class="bg-emerald-400/10 p-6 rounded-[24px] border border-emerald-400/20">
+                    <div class="flex justify-between items-center mb-4">
+                        <p class="text-[9px] font-black text-emerald-400 uppercase tracking-widest">免稅後金額</p>
+                        <p id="tax-final" class="text-3xl font-black tracking-tighter">¥ 0</p>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 pt-4">
-                        <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                            <p class="text-[10px] font-black opacity-40 mb-1 uppercase">省下稅金</p>
-                            <p id="tax-saved" class="text-xl font-black text-emerald-400">¥ 0</p>
-                        </div>
-                        <div class="bg-white/5 p-4 rounded-2xl border border-white/5 text-right">
-                            <p class="text-[10px] font-black opacity-40 mb-1 uppercase">約合台幣</p>
-                            <p id="tax-twd" class="text-xl font-black text-sky-400">$ 0</p>
-                        </div>
+                    <div class="flex justify-between items-center pt-4 border-t border-white/5">
+                        <p class="text-[9px] font-black opacity-50 uppercase tracking-widest">節省稅金</p>
+                        <p id="tax-saved" class="text-lg font-bold text-emerald-300 opacity-80">¥ 0</p>
                     </div>
                 </div>
-
-                <div class="mt-8 bg-emerald-400/10 p-8 rounded-[32px] border border-emerald-400/20 text-center relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-emerald-400/30"></div>
-                    <p class="text-[11px] font-black text-emerald-400 uppercase tracking-[0.4em] mb-2">免稅最終支付額</p>
-                    <p id="tax-final" class="text-5xl font-black tracking-tighter">¥ 0</p>
-                </div>
-            </section>
+                <p class="mt-4 text-[9px] opacity-40 leading-relaxed font-bold">註：日本免稅通常需單筆滿 ¥5,000 (未稅)。<br>部分店家可能會收取 1.1%~2.1% 的手續費。</p>
+            </div>
         </div>
 
-        <!-- 景點推薦分頁 -->
+        <!-- 景點推薦頁面 -->
         <div id="spots-page" class="page px-6">
-            <header class="py-12 motion-card">
-                <h2 class="text-3xl font-black italic tracking-tighter text-amber-400">景點推薦</h2>
-                <p class="text-[10px] font-black opacity-40 uppercase tracking-widest mt-1">東京 & 大阪 精選地圖</p>
+            <header class="py-10">
+                <h2 class="text-2xl font-black italic tracking-tighter text-amber-400">景點推薦</h2>
+                <p class="text-[9px] font-bold opacity-40 uppercase tracking-widest">點擊開啟 Google Maps</p>
             </header>
-            <div class="space-y-6 pb-12" id="spots-list"></div>
+            <div id="spots-list" class="space-y-3"></div>
         </div>
 
-        <!-- 天氣分頁 -->
-        <div id="weather-page" class="page">
-            <header class="p-8 pt-12 flex justify-between items-center">
-                <h2 class="text-2xl font-black italic tracking-widest text-sky-400">即時氣象數據</h2>
-                <button onclick="fetchAllWeather()" id="weather-refresh-btn" class="text-sky-400 p-2 active:rotate-180 transition-transform"><i class="fa-solid fa-arrows-rotate text-xl"></i></button>
+        <!-- 氣象頁面 -->
+        <div id="weather-page" class="page px-6">
+            <header class="py-10">
+                <h2 class="text-2xl font-black italic tracking-tighter text-sky-400">氣象</h2>
+                <p class="text-[9px] font-bold opacity-40 uppercase tracking-widest">點擊查看詳細預報</p>
             </header>
-            <div id="weather-content" class="px-6 pb-24 space-y-4"></div>
+
+            <!-- 當地天氣模塊 -->
+            <div class="glass-card local-weather-card mb-6" id="local-weather-card">
+                <div class="flex justify-between items-center">
+                    <div id="local-weather-info" class="flex-1">
+                        <span class="text-[9px] font-black text-sky-400 uppercase tracking-widest block mb-1">當地天氣</span>
+                        <p class="text-xl font-black">正在獲取定位...</p>
+                    </div>
+                    <div id="local-weather-icon"></div>
+                </div>
+            </div>
+
+            <div id="weather-content" class="space-y-3"></div>
         </div>
     </div>
 
+    <!-- 底部導覽 -->
     <div class="tab-bar-container">
         <nav class="tab-bar">
-            <button onclick="showPage('home-page')" id="tab-home" class="nav-btn active"><i class="fa-solid fa-wallet text-xl"></i></button>
-            <button onclick="showPage('tax-page')" id="tab-tax" class="nav-btn"><i class="fa-solid fa-receipt text-xl"></i></button>
-            <button onclick="showPage('spots-page')" id="tab-spots" class="nav-btn"><i class="fa-solid fa-map-location-dot text-xl"></i></button>
-            <button onclick="showPage('weather-page')" id="tab-weather" class="nav-btn"><i class="fa-solid fa-cloud-sun text-xl"></i></button>
+            <button onclick="showPage('home-page')" id="tab-home" class="nav-btn active"><i class="fa-solid fa-house-chimney text-lg"></i></button>
+            <button onclick="showPage('tax-page')" id="tab-tax" class="nav-btn"><i class="fa-solid fa-receipt text-lg"></i></button>
+            <button onclick="showPage('spots-page')" id="tab-spots" class="nav-btn"><i class="fa-solid fa-location-arrow text-lg"></i></button>
+            <button onclick="showPage('weather-page')" id="tab-weather" class="nav-btn"><i class="fa-solid fa-cloud-sun text-lg"></i></button>
         </nav>
     </div>
 
     <script>
-        const WEATHER_API_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
-        let currentRate = 4.75; 
+        const WEATHER_KEY = '25a54155dd027a7abd3f8c19a521a5f6';
+        let currentRate = 4.75;
         let currentTaxRate = 0.1;
 
-        const travelSpots = [
-            { city: '東京', color: 'sky-500', name: 'Shibuya Sky', desc: '澀谷最高地標，360度俯瞰東京，絕美日落與夜景最佳拍點。', tags: ['全景', '必拍'], map: 'Shibuya+Sky' },
-            { city: '東京', color: 'sky-500', name: '淺草寺', desc: '雷門大燈籠、仲見世通小吃，東京最負盛名的傳統文化據點。', tags: ['歷史', '散策'], map: 'Senso-ji' },
-            { city: '大阪', color: 'orange-500', name: '道頓堀 & 心齋橋', desc: '大阪美食心臟，跑跑人燈牌、章魚燒、各種街頭表演與商店。', tags: ['美食', '熱鬧'], map: 'Dotonbori' },
-            { city: '大阪', color: 'orange-500', name: '日本環球影城 USJ', desc: '瑪利歐、哈利波特迷必訪，全世界最受歡迎的主題樂園之一。', tags: ['遊樂園', '人氣'], map: 'Universal+Studios+Japan' }
-        ];
-
-        function renderSpots() {
-            const list = document.getElementById('spots-list');
-            list.innerHTML = travelSpots.map(spot => `
-                <div class="card-frosted motion-card spot-card">
-                    <span class="spot-city-tag bg-${spot.color}">${spot.city === '東京' ? 'TOKYO' : 'OSAKA'} ${spot.city}</span>
-                    <div class="p-6 pt-12">
-                        <div class="flex justify-between items-center">
-                            <div class="flex-1 pr-4">
-                                <p class="text-xl font-black mb-1">${spot.name}</p>
-                                <p class="text-[11px] opacity-60 leading-relaxed mb-3">${spot.desc}</p>
-                            </div>
-                            <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${spot.map}', '_blank')" class="spot-nav-btn shrink-0">
-                                <i class="fa-solid fa-location-dot text-sky-400"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function initMotionEngine(pageId) {
-            const page = document.getElementById(pageId);
-            const cards = page.querySelectorAll('.motion-card');
-            cards.forEach(card => card.classList.remove('is-visible'));
-            setTimeout(() => {
-                cards.forEach((card, i) => setTimeout(() => card.classList.add('is-visible'), i * 100));
-            }, 50);
-        }
+        const aqiMap = {
+            1: { label: '優', color: 'text-emerald-400', bg: 'bg-emerald-400/20' },
+            2: { label: '良', color: 'text-lime-400', bg: 'bg-lime-400/20' },
+            3: { label: '普通', color: 'text-amber-400', bg: 'bg-amber-400/20' },
+            4: { label: '差', color: 'text-orange-400', bg: 'bg-orange-400/20' },
+            5: { label: '極差', color: 'text-red-400', bg: 'bg-red-400/20' }
+        };
 
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            const mapping = { 'home-page': 'tab-home', 'tax-page': 'tab-tax', 'spots-page': 'tab-spots', 'weather-page': 'tab-weather' };
-            document.getElementById(mapping[id]).classList.add('active');
-            initMotionEngine(id);
-            if (id === 'weather-page') fetchAllWeather();
+            document.getElementById('tab-' + id.split('-')[0]).classList.add('active');
+            
+            // 每次顯示頁面時觸發卡片動畫
+            const cards = document.getElementById(id).querySelectorAll('.motion-card');
+            cards.forEach((c, i) => {
+                c.classList.remove('is-visible');
+                setTimeout(() => c.classList.add('is-visible'), i * 60);
+            });
+
+            if(id === 'spots-page') loadSpots();
+            if(id === 'weather-page') { loadWeather(); loadLocalWeather(); }
         }
 
-        function setTax(rate, type) {
-            currentTaxRate = rate;
-            document.getElementById('tax-10').classList.toggle('active', type === 'standard');
-            document.getElementById('tax-8').classList.toggle('active', type === 'food');
-            document.getElementById('tax-elec').classList.toggle('active', type === 'electronics');
+        // 匯率計算
+        const twdIn = document.getElementById('twd-input'), jpyIn = document.getElementById('jpy-input');
+        if(twdIn) twdIn.oninput = () => jpyIn.value = twdIn.value ? Math.round(twdIn.value * currentRate) : '';
+        if(jpyIn) jpyIn.oninput = () => twdIn.value = jpyIn.value ? Math.round(jpyIn.value / currentRate) : '';
+
+        // 免稅試算
+        function setTax(r, btnId) {
+            currentTaxRate = r;
+            document.querySelectorAll('.tax-tag').forEach(b => b.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active');
             calculateTax();
         }
-
         function calculateTax() {
-            const val = parseFloat(document.getElementById('tax-input').value) || 0;
-            const final = Math.round(val / (1 + currentTaxRate));
-            const saved = val - final;
-            const twd = Math.round(final / currentRate);
-            document.getElementById('tax-final').innerText = `¥ ${final.toLocaleString()}`;
+            const v = parseFloat(document.getElementById('tax-input').value) || 0;
+            const preTax = Math.round(v / (1 + currentTaxRate));
+            const saved = v - preTax;
+            document.getElementById('tax-final').innerText = `¥ ${preTax.toLocaleString()}`;
             document.getElementById('tax-saved').innerText = `¥ ${saved.toLocaleString()}`;
-            document.getElementById('tax-twd').innerText = `$ ${twd.toLocaleString()}`;
         }
-
-        function searchTrain(type) {
-            const from = document.getElementById('train-from').value;
-            const to = document.getElementById('train-to').value;
-            let url = "";
-            switch(type) {
-                case 'shinkansen': url = `https://www.google.com/search?q=新幹線時刻表+${from}+至+${to}`; break;
-                case 'nex': url = "https://www.jreast.co.jp/multi/zh-CHT/nex/"; break;
-                case 'skyliner': url = "https://www.keisei.co.jp/keisei/tetudou/skyliner/tc/timetable/index.php"; break;
-                default: url = `https://www.jorudan.co.jp/norikae/cgi/nori.cgi?eki1=${from}&eki2=${to}`; break;
-            }
-            window.open(url, '_blank');
-        }
-
         document.getElementById('tax-input').oninput = calculateTax;
-        const twdIn = document.getElementById('twd-input');
-        const jpyIn = document.getElementById('jpy-input');
-        twdIn.oninput = () => { jpyIn.value = twdIn.value ? Math.round(twdIn.value * currentRate) : ''; };
-        jpyIn.oninput = () => { twdIn.value = jpyIn.value ? Math.round(jpyIn.value / currentRate) : ''; };
 
-        // 重新封裝天氣抓取邏輯，確保即使定位失敗也會顯示其他內容
-        async function fetchAllWeather() {
+        // 天氣圖示生成
+        function getWeatherIcon(main, iconCode) {
+            const isNight = iconCode.includes('n');
+            const sunColor = isNight ? '#94a3b8' : '#fbbf24';
+            const isClear = main.toLowerCase() === 'clear';
+            const isRain = main.toLowerCase().includes('rain') || main.toLowerCase().includes('drizzle');
+            
+            let html = `<svg viewBox="0 0 64 64" class="w-14 h-14 overflow-visible">`;
+            if (isClear) {
+                html += `<circle cx="32" cy="32" r="12" fill="${sunColor}" class="anim-sun" />`;
+            } else if (isRain) {
+                html += `<path class="anim-cloud" d="M48,38c0,6.6-5.4,12-12,12H20c-6.6,0-12-5.4-12-12s5.4-12,12-12h1.6c1.6-4.8,7.8-9,15.2-9c9.6,0,17.3,7.7,17.3,17.3" fill="#94a3b8" />`;
+            } else {
+                html += `<circle cx="42" cy="24" r="8" fill="${sunColor}" opacity="0.6" />
+                         <path class="anim-cloud" d="M38,44c0,4.4-3.6,8-8,8H18c-4.4,0-8-3.6-8-8s3.6-8,8-8h1.1c0.7-3.2,4.9-6,9.8-6c6.4,0,11.5,5.1,11.5,11.5" fill="white" fill-opacity="0.8" />`;
+            }
+            html += `</svg>`;
+            return html;
+        }
+
+        async function fetchAQI(lat, lon) {
+            try {
+                const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${WEATHER_KEY}`);
+                const d = await res.json();
+                return d.list[0].main.aqi;
+            } catch(e) { return 1; }
+        }
+
+        async function loadWeather() {
             const container = document.getElementById('weather-content');
-            const btn = document.getElementById('weather-refresh-btn');
-            
-            btn.classList.add('animate-spin');
-            container.innerHTML = '<p class="text-center opacity-40 py-10 italic font-bold">同步全球氣象中...</p>';
-            
-            let htmlContent = '';
-            
-            // 1. 嘗試抓取定位天氣
+            container.innerHTML = '<p class="text-center py-10 opacity-30 font-bold text-xs">載入數據中...</p>';
             try {
-                const coords = await getLocation();
-                if (coords) {
-                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.lat}&lon=${coords.lon}&units=metric&appid=${WEATHER_API_KEY}&lang=zh_tw`);
-                    const data = await res.json();
-                    htmlContent += generateWeatherCard(data.name, data, "當前位置");
+                const cities = ['Tokyo', 'Osaka', 'Kyoto', 'Sapporo', 'Fukuoka'];
+                const names = { Tokyo: '東京', Osaka: '大阪', Kyoto: '京都', Sapporo: '札幌', Fukuoka: '福岡' };
+                let html = '';
+                for(let city of cities) {
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_KEY}&lang=zh_tw`);
+                    const d = await res.json();
+                    const aqi = await fetchAQI(d.coord.lat, d.coord.lon);
+                    html += `
+                        <div class="glass-card flex justify-between items-center" onclick="window.open('https://openweathermap.org/city/${d.id}')">
+                            <div class="flex-1">
+                                <p class="text-xl font-black">${names[city]}</p>
+                                <div class="flex flex-wrap items-center gap-2 mt-1">
+                                    <span class="text-sky-400 font-bold text-[10px] uppercase">${d.weather[0].description}</span>
+                                    <span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-black text-[9px]">
+                                        <i class="fa-solid fa-fan anim-fan"></i> ${(d.wind.speed * 3.6).toFixed(1)} km/h
+                                    </span>
+                                    <span class="${aqiMap[aqi].bg} ${aqiMap[aqi].color} px-2 py-0.5 rounded-full font-black text-[9px]">AQI: ${aqiMap[aqi].label}</span>
+                                </div>
+                                <p class="text-3xl font-black mt-2">${Math.round(d.main.temp)}°C</p>
+                            </div>
+                            <div class="flex items-center justify-center">${getWeatherIcon(d.weather[0].main, d.weather[0].icon)}</div>
+                        </div>`;
                 }
-            } catch (err) {
-                console.warn("當前位置天氣抓取失敗:", err);
-            }
+                container.innerHTML = html;
+            } catch(e) { container.innerHTML = '<p class="text-center text-red-400">讀取失敗</p>'; }
+        }
 
-            // 2. 抓取固定城市天氣
-            const staticCities = [
-                { name: '東京', q: 'Tokyo' },
-                { name: '大阪', q: 'Osaka' }
-            ];
+        async function loadLocalWeather() {
+            const info = document.getElementById('local-weather-info');
+            const iconBox = document.getElementById('local-weather-icon');
+            if (!navigator.geolocation) { info.innerHTML = '<p class="text-xs opacity-50">不支援定位</p>'; return; }
 
-            for (const city of staticCities) {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
                 try {
-                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city.q}&units=metric&appid=${WEATHER_API_KEY}&lang=zh_tw`);
-                    const data = await res.json();
-                    htmlContent += generateWeatherCard(city.name, data, "熱門城市");
-                } catch (e) {
-                    console.error(`${city.name} 資料載入失敗`);
-                }
-            }
-
-            container.innerHTML = htmlContent || '<p class="text-center opacity-50 py-10">無法取得任何天氣資訊，請檢查網路連線。</p>';
-            btn.classList.remove('animate-spin');
-            initMotionEngine('weather-page');
+                    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${WEATHER_KEY}&lang=zh_tw`);
+                    const d = await res.json();
+                    const aqi = await fetchAQI(latitude, longitude);
+                    info.innerHTML = `
+                        <span class="text-[9px] font-black text-sky-400 uppercase tracking-widest block mb-1">當地天氣 (${d.name})</span>
+                        <div class="flex items-baseline gap-2">
+                            <p class="text-3xl font-black">${Math.round(d.main.temp)}°C</p>
+                            <span class="text-xs font-bold opacity-60">${d.weather[0].description}</span>
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <span class="text-[10px] font-bold opacity-40"><i class="fa-solid fa-fan anim-fan mr-1"></i>${(d.wind.speed * 3.6).toFixed(1)} km/h</span>
+                            <span class="text-[10px] font-black ${aqiMap[aqi].color} bg-white/5 px-2 py-0.5 rounded-full">AQI: ${aqiMap[aqi].label}</span>
+                        </div>`;
+                    iconBox.innerHTML = getWeatherIcon(d.weather[0].main, d.weather[0].icon);
+                } catch(e) { info.innerHTML = '<p class="text-red-400 text-xs">獲取失敗</p>'; }
+            }, () => { info.innerHTML = '<p class="text-xs opacity-40">無法定位</p>'; });
         }
 
-        // 輔助函式：取得座標 (優先使用瀏覽器定位，失敗則用 IP 備援)
-        async function getLocation() {
-            try {
-                // 嘗試瀏覽器定位 (HTML5 Geolocation)
-                const pos = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) reject("不支援定位");
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { 
-                        enableHighAccuracy: false, 
-                        timeout: 3000, 
-                        maximumAge: 600000 
-                    });
-                });
-                return { lat: pos.coords.latitude, lon: pos.coords.longitude };
-            } catch (err) {
-                // 備援：IP 定位
-                try {
-                    const ipRes = await fetch('https://ipapi.co/json/');
-                    const ipData = await ipRes.json();
-                    if (ipData.latitude && ipData.longitude) {
-                        return { lat: ipData.latitude, lon: ipData.longitude };
-                    }
-                } catch (ipErr) {
-                    return null;
-                }
-            }
-            return null;
+        function loadSpots() {
+            const container = document.getElementById('spots-list');
+            const data = [{ t: '地標', i: 'fa-torii-gate' }, { t: '美食', i: 'fa-bowl-food' }, { t: '購物', i: 'fa-bag-shopping' }];
+            container.innerHTML = data.map(s => `
+                <div class="glass-card flex justify-between items-center py-6" onclick="window.open('https://www.google.com/maps/search/日本+${s.t}/')">
+                    <p class="text-xl font-black">${s.t}</p>
+                    <i class="fa-solid ${s.i} text-amber-400 text-xl"></i>
+                </div>`).join('');
         }
 
-        function generateWeatherCard(title, d, label) {
-            if (!d || !d.weather) return '';
-            const code = d.weather[0].icon;
-            const isNight = code.endsWith('n');
-            const mainCode = code.substring(0, 2);
-            
-            let iconClass = 'fa-solid fa-cloud', animClass = 'animate-cloud', iconColor = 'text-sky-400';
-            
-            switch(mainCode) {
-                case '01': 
-                    iconClass = isNight ? 'fa-solid fa-moon' : 'fa-solid fa-sun'; 
-                    animClass = isNight ? '' : 'animate-sun'; 
-                    iconColor = isNight ? 'text-indigo-200' : 'text-orange-400';
-                    break;
-                case '02': 
-                    iconClass = isNight ? 'fa-solid fa-cloud-moon' : 'fa-solid fa-cloud-sun';
-                    iconColor = isNight ? 'text-slate-300' : 'text-amber-400';
-                    break;
-                case '03': 
-                    iconClass = 'fa-solid fa-cloud';
-                    iconColor = 'text-slate-400';
-                    break;
-                case '04': 
-                    iconClass = 'fa-solid fa-cloud-meatball';
-                    iconColor = 'text-slate-500';
-                    break;
-                case '09': 
-                    iconClass = 'fa-solid fa-cloud-showers-water';
-                    animClass = 'animate-rain';
-                    iconColor = 'text-blue-400';
-                    break;
-                case '10': 
-                    iconClass = isNight ? 'fa-solid fa-cloud-moon-rain' : 'fa-solid fa-cloud-sun-rain';
-                    animClass = 'animate-rain';
-                    iconColor = 'text-sky-500';
-                    break;
-                case '11': 
-                    iconClass = 'fa-solid fa-cloud-bolt';
-                    iconColor = 'text-yellow-400';
-                    break;
-                case '13': 
-                    iconClass = 'fa-solid fa-snowflake';
-                    animClass = 'animate-snow';
-                    iconColor = 'text-sky-100';
-                    break;
-                case '50': 
-                    iconClass = 'fa-solid fa-smog';
-                    iconColor = 'text-slate-300';
-                    break;
-            }
-
-            return `
-                <div class="card-frosted motion-card p-8">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] font-black bg-white/20 px-3 py-1 rounded-full uppercase tracking-widest">${label}</span>
-                            <p class="text-2xl font-black mt-4">${title}</p>
-                        </div>
-                        <div class="weather-icon-container ${animClass} ${iconColor} drop-shadow-lg">
-                            <i class="${iconClass}"></i>
-                        </div>
-                    </div>
-                    <div class="mt-8 mb-4 flex items-end gap-3">
-                        <span class="text-7xl font-black tracking-tighter">${Math.round(d.main.temp)}°</span>
-                        <div class="flex flex-col mb-2">
-                            <span class="text-base font-bold opacity-80">${d.weather[0].description}</span>
-                            <span class="text-[11px] font-black text-sky-400 uppercase tracking-tighter">體感 ${Math.round(d.main.feels_like)}°</span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mt-10 pt-6 border-t border-white/10 text-center">
-                        <div><p class="text-[10px] opacity-40 font-black uppercase mb-1">風速</p><p class="text-xs font-black">${(d.wind.speed * 3.6).toFixed(1)} km/h</p></div>
-                        <div class="border-x border-white/10"><p class="text-[10px] opacity-40 font-black uppercase mb-1">濕度</p><p class="text-xs font-black">${d.main.humidity}%</p></div>
-                        <div><p class="text-[10px] opacity-40 font-black uppercase mb-1">雲量</p><p class="text-xs font-black text-sky-400">${d.clouds.all}%</p></div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function toggleTheme() { document.body.classList.toggle('light-mode'); }
+        // 背景上傳
         document.getElementById('bg-upload').onchange = e => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => { document.getElementById('main-bg').style.backgroundImage = `url(${ev.target.result})`; };
-                reader.readAsDataURL(file);
-            }
+            const r = new FileReader();
+            r.onload = ev => document.getElementById('main-bg').style.backgroundImage = `url(${ev.target.result})`;
+            r.readAsDataURL(e.target.files[0]);
         };
 
         window.onload = () => {
-            renderSpots();
-            fetch('https://open.er-api.com/v6/latest/TWD').then(r => r.json()).then(d => { currentRate = d.rates.JPY; });
-            initMotionEngine('home-page');
+            // 初始匯率獲取
+            fetch('https://open.er-api.com/v6/latest/TWD').then(r=>r.json()).then(d=>{
+                currentRate = d.rates.JPY;
+                document.getElementById('rate-display').innerText = `1 台幣 = ${currentRate.toFixed(2)} 日圓`;
+            });
+            showPage('home-page');
         };
     </script>
 </body>
